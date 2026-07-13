@@ -1,0 +1,5 @@
+# Ignore actual config files with secrets
+# Only the .example templates should be in git
+.env
+paths.env
+*.local
