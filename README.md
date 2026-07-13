@@ -23,6 +23,10 @@ This will:
 - Create directory structure (`~/.config/deskside_ai`, `~/lab/deskside_ai`, `~/.cache/deskside_ai`)
 - Copy configuration templates to `~/.config/deskside_ai/`
 - Configure systemd for WSL
+- Install NVIDIA Container Toolkit for GPU support in Docker
+- Install DGX-like development tools (tmux, htop, tree, ripgrep, fd-find)
+- Set up JupyterLab and uv in your default Python virtual environment
+- Configure JupyterLab systemd service
 
 **After running setup-initial.sh**, you must restart WSL for systemd to take effect:
 1. Exit WSL completely
@@ -45,6 +49,57 @@ Verify Docker installation:
 docker run hello-world
 ```
 
+### JupyterLab Service
+
+A systemd service is configured to run JupyterLab persistently. To enable and start it:
+
+```bash
+sudo systemctl enable --now jupyterlab@$USER
+```
+
+Check the service status:
+```bash
+sudo systemctl status jupyterlab@$USER --no-pager
+```
+
+Get the JupyterLab access token:
+```bash
+sudo journalctl -u jupyterlab@$USER | grep token
+```
+
+JupyterLab will be available at: http://localhost:8888
+
+To stop the service:
+```bash
+sudo systemctl stop jupyterlab@$USER
+```
+
+To disable the service from starting on boot:
+```bash
+sudo systemctl disable jupyterlab@$USER
+```
+
+### GPU Support
+
+The setup includes NVIDIA Container Toolkit for GPU acceleration in Docker containers. To verify GPU access in Docker:
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi
+```
+
+To use GPU in docker compose, add to your service definition:
+```yaml
+services:
+  my-service:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+```
+
 ### Configuration
 
 The setup script automatically copies configuration templates to `~/.config/deskside_ai/`.
@@ -64,6 +119,20 @@ nano ~/.config/deskside_ai/paths.env
 ```
 
 **Important:** Never commit the actual `.env` or `paths.env` files to git. Only the `.example` templates in `config/` are versioned.
+
+### Development Tools
+
+The setup installs a DGX-like development environment with:
+
+- **tmux** - Terminal multiplexer for managing multiple sessions
+- **htop** - Interactive process viewer
+- **tree** - Directory structure visualization
+- **ripgrep** (rg) - Fast recursive search tool
+- **fd-find** (fd) - Fast alternative to find
+- **JupyterLab** - Interactive development environment for notebooks
+- **uv** - Fast Python package installer
+
+These tools are installed in your default Python virtual environment at `~/venvs/default`.
 
 ## Directory Structure
 
@@ -123,8 +192,17 @@ nano ~/.config/deskside_ai/.env
 # Start a new project
 cd ~/lab/deskside_ai/work && mkdir my-project
 
-# Launch Jupyter
-cd ~/lab/deskside_ai/notebooks && jupyter notebook
+# Check JupyterLab service status
+sudo systemctl status jupyterlab@$USER --no-pager
+
+# Search files with ripgrep
+rg "pattern" ~/lab/deskside_ai/work
+
+# Find files with fd
+fd "filename" ~/lab/deskside_ai
+
+# Monitor system resources
+htop
 
 # Check disk usage
 du -sh ~/lab/deskside_ai/*

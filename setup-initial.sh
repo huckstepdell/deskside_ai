@@ -76,3 +76,62 @@ if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
 
     echo "systemd is configured. Run 'wsl --shutdown' in Windows PowerShell, then reopen WSL."
 fi
+
+echo ""
+echo "Setting up NVIDIA Container Toolkit..."
+
+# Add NVIDIA Container Toolkit GPG key
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | \
+  sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+
+# Add NVIDIA Container Toolkit repository
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+
+# Install and configure NVIDIA Container Toolkit
+sudo apt update
+sudo apt install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+
+echo "✓ NVIDIA Container Toolkit installed and configured"
+
+echo ""
+echo "Setting up DGX-like development environment..."
+
+# Install development tools
+sudo apt install -y tmux htop tree ripgrep fd-find
+
+# Install Python tools in user's default venv
+echo "Installing JupyterLab and uv in ~/venvs/default..."
+~/venvs/default/bin/pip install --upgrade pip
+~/venvs/default/bin/pip install jupyterlab uv
+
+# Add local user binaries to PATH if not already present
+if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' ~/.bashrc; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    echo "✓ Added ~/.local/bin to PATH in ~/.bashrc"
+else
+    echo "  ~/.local/bin already in PATH"
+fi
+
+echo "✓ DGX-like development environment configured"
+
+echo ""
+echo "Setting up JupyterLab systemd service..."
+
+# Install the JupyterLab service file
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+sudo cp "${SCRIPT_DIR}/jupyterlab.service" /etc/systemd/system/jupyterlab@.service
+sudo systemctl daemon-reload
+
+echo "✓ JupyterLab systemd service installed"
+echo ""
+echo "To enable and start JupyterLab for your user, run:"
+echo "  sudo systemctl enable --now jupyterlab@$USER"
+echo "  sudo systemctl status jupyterlab@$USER --no-pager"
+echo ""
+echo "JupyterLab will be available at: http://localhost:8888"
+echo "Get the token with: sudo journalctl -u jupyterlab@$USER | grep token"
+echo ""
+echo "Run 'source ~/.bashrc' to update your PATH in the current session"
