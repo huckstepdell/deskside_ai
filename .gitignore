@@ -219,4 +219,5 @@ __marimo__/
 
 # Mine
 gb10/ollama/docker/start.sh
+gb10/ollama/docker/stop.sh
 gb10/ollama/sync-app.sh
