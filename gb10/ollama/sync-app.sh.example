@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
+PROJECT_NAME="gb10-ollama"
+
+# Can be overridden by NVIDIA Sync environment variables
+export OLLAMA_BIND_IP="${OLLAMA_BIND_IP:-<<your_ip_here>>}"
+export PULL_MODELS="${PULL_MODELS:-qwen3-coder-next:q4_K_M devstral-small-2:24b gpt-oss:latest}"
+
+cleanup() {
+  echo "Signal received; stopping Compose stack..."
+  docker compose \
+    -p "${PROJECT_NAME}" \
+    -f "${COMPOSE_FILE}" \
+    stop
+  exit 0
+}
+
+trap cleanup INT TERM HUP QUIT EXIT
+
+if ! docker info >/dev/null 2>&1; then
+  echo "Error: Docker daemon not reachable." >&2
+  exit 1
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "Error: Docker Compose is not available." >&2
+  exit 1
+fi
+
+if [ ! -f "${COMPOSE_FILE}" ]; then
+  echo "Error: Compose file not found: ${COMPOSE_FILE}" >&2
+  exit 1
+fi
+
+echo "Validating Compose configuration..."
+docker compose \
+  -p "${PROJECT_NAME}" \
+  -f "${COMPOSE_FILE}" \
+  config -q
+
+echo "Starting Ollama and Open WebUI stack..."
+docker compose \
+  -p "${PROJECT_NAME}" \
+  -f "${COMPOSE_FILE}" \
+  up -d --remove-orphans
+
+echo "Stack is running:"
+docker compose \
+  -p "${PROJECT_NAME}" \
+  -f "${COMPOSE_FILE}" \
+  ps
+
+echo "Open WebUI: http://${OLLAMA_BIND_IP}:3000"
+echo "Ollama API: http://${OLLAMA_BIND_IP}:11434"
+
+while :; do
+  sleep 86400
+done
