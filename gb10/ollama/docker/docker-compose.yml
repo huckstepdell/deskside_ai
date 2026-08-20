@@ -8,7 +8,7 @@ services:
       OLLAMA_HOST: 0.0.0.0:11434
 
     ports:
-      - "100.94.55.35:11434:11434"
+      - "${OLLAMA_BIND_IP:?Set OLLAMA_BIND_IP first}:11434:11434"
 
     volumes:
       - "${HOME}/ollama-data:/root/.ollama"
@@ -21,3 +21,21 @@ services:
               count: all
               capabilities:
                 - gpu
+
+    entrypoint:
+      - /bin/sh
+      - -c
+
+    command: |
+      set -e
+      ollama serve &
+      pid=$$!
+
+      until ollama list >/dev/null 2>&1; do
+        sleep 2
+      done
+
+      ollama pull qwen3-coder-next:q4_K_M
+      ollama pull devstral-small-2:24b
+
+      wait "$$pid"

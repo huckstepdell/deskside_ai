@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL 5~files
 __pycache__/
 *.py[codz]
 *$py.class
@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Mine
+gb10/ollama/docker/start.sh
