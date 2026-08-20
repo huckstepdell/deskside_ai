@@ -11,7 +11,7 @@ services:
       - "${OLLAMA_BIND_IP:?Set OLLAMA_BIND_IP first}:11434:11434"
 
     volumes:
-      - "${HOME}/ollama-data:/root/.ollama"
+      - "/container_data/ollama/ollama-data:/root/.ollama"
 
     deploy:
       resources:
@@ -49,7 +49,7 @@ services:
       PULL_MODELS: "${PULL_MODELS:?Set PULL_MODELS first}"
 
     volumes:
-      - "${HOME}/ollama-data:/root/.ollama"
+      - "/container_data/ollama/ollama-data:/root/.ollama"
 
     entrypoint:
       - /bin/sh
@@ -75,7 +75,7 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
 
     volumes:
-      - "${HOME}/open-webui-data:/app/backend/data"
+      - "/container_data/open-webui/open-webui-data:/app/backend/data"
 
     depends_on:
       ollama:
