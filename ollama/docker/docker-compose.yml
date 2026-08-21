@@ -1,0 +1,84 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+
+    ports:
+      - "${OLLAMA_BIND_IP:?Set OLLAMA_BIND_IP first}:11434:11434"
+
+    volumes:
+      - "/container_data/ollama/ollama-data:/root/.ollama"
+
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+
+    command: ["serve"]
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "OLLAMA_HOST=http://127.0.0.1:11434 ollama list >/dev/null 2>&1 || exit 1"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: ollama-init
+    restart: "no"
+
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      PULL_MODELS: "${PULL_MODELS:?Set PULL_MODELS first}"
+
+    volumes:
+      - "/container_data/ollama/ollama-data:/root/.ollama"
+
+    entrypoint:
+      - /bin/sh
+      - -c
+
+    command:
+      - |
+        set -eu
+        for model in $$PULL_MODELS; do
+          echo "Pulling $$model"
+          ollama pull "$$model"
+        done
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main-slim
+    container_name: open-webui
+    restart: unless-stopped
+
+    ports:
+      - "${OLLAMA_BIND_IP:?Set OLLAMA_BIND_IP first}:3000:8080"
+
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+
+    volumes:
+      - "/container_data/open-webui/open-webui-data:/app/backend/data"
+
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
