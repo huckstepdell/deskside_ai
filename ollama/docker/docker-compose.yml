@@ -2,7 +2,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
-    restart: unless-stopped
+    restart: always
 
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
@@ -66,7 +66,7 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:main-slim
     container_name: open-webui
-    restart: unless-stopped
+    restart: always
 
     ports:
       - "${OLLAMA_BIND_IP:?Set OLLAMA_BIND_IP first}:3000:8080"
