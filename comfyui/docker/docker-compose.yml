@@ -1,0 +1,16 @@
+services:
+  image-engine:
+#    image: ghcr.io/comfyui-gpu-docker/comfyui:latest
+    image: mmartial/comfyui-nvidia-docker:ubuntu26_cuda13.3-dgx-latest
+    container_name: comfyui
+    ports:
+      - "8188:8188"
+    volumes:
+      - /container_data/comfyui:/home/user/ComfyUI
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
