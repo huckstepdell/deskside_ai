@@ -8,7 +8,7 @@ services:
       OLLAMA_HOST: 0.0.0.0:11435
       OLLAMA_NUM_PARALLEL: 4
     ports:
-      - "11435:11434"
+      - "11435:11435"
 
     volumes:
       - "/container_data/ollama/ollama-data:/root/.ollama"
@@ -28,7 +28,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "OLLAMA_HOST=http://127.0.0.1:11434 ollama list >/dev/null 2>&1 || exit 1"
+          "OLLAMA_HOST=http://127.0.0.1:11435 ollama list >/dev/null 2>&1 || exit 1"
         ]
       interval: 5s
       timeout: 5s
@@ -45,7 +45,7 @@ services:
         condition: service_healthy
 
     environment:
-      OLLAMA_HOST: http://ollama:11434
+      OLLAMA_HOST: http://ollama:11435
       PULL_MODELS: "${PULL_MODELS:?Set PULL_MODELS first}"
 
     volumes:
@@ -72,7 +72,7 @@ services:
       - "3000:8080"
 
     environment:
-      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_BASE_URL: http://ollama:11435
 
     volumes:
       - "/container_data/open-webui/open-webui-data:/app/backend/data"
