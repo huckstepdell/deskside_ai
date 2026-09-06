@@ -5,10 +5,10 @@ services:
     restart: always
 
     environment:
-      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_HOST: 0.0.0.0:11435
       OLLAMA_NUM_PARALLEL: 4
     ports:
-      - "11434:11434"
+      - "11435:11434"
 
     volumes:
       - "/container_data/ollama/ollama-data:/root/.ollama"
