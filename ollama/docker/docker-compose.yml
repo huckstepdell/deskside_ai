@@ -8,7 +8,7 @@ services:
       OLLAMA_HOST: 0.0.0.0:11434
       OLLAMA_NUM_PARALLEL: 4
     ports:
-      - "0.0.0.0:11434:11434"
+      - "11434:11434"
 
     volumes:
       - "/container_data/ollama/ollama-data:/root/.ollama"
@@ -69,7 +69,7 @@ services:
     restart: always
 
     ports:
-      - "0.0.0.0:3000:8080"
+      - "3000:8080"
 
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
