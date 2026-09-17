@@ -13,11 +13,15 @@ do {
     switch ($device) {
         "1" {
             $modelList = "blackwell_4000.txt"
-            $composeFiles = @("-f", "docker-compose.yml")
+            $composeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.blackwell.yml")
         }
         "2" {
             $modelList = "gb10.txt"
-            $composeFiles = @("-f", "docker-compose.yml", "-f", "docker-compose.webui.yml")
+            $composeFiles = @(
+                "-f", "docker-compose.yml",
+                "-f", "docker-compose.gb10.yml",
+                "-f", "docker-compose.webui.yml"
+            )
         }
         default {
             Write-Host "Please enter 1 or 2."

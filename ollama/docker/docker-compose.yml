@@ -2,11 +2,11 @@ services:
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
+    runtime: nvidia
     restart: always
 
     environment:
       OLLAMA_HOST: 0.0.0.0:11435
-      OLLAMA_NUM_PARALLEL: 4
     ports:
       - "11435:11435"
 
