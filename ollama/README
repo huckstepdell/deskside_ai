@@ -1,0 +1,2 @@
+Command for monitoring cuda usage
+nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv -l 1
