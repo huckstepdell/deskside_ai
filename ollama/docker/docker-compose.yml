@@ -11,7 +11,7 @@ services:
       - "11435:11435"
 
     volumes:
-      - "/container_data/ollama/ollama-data:/root/.ollama"
+      - "${CONTAINER_DATA_DIR:-/container_data}/ollama/ollama-data:/root/.ollama"
 
     deploy:
       resources:
@@ -49,7 +49,7 @@ services:
       PULL_MODELS: "${PULL_MODELS:?Set PULL_MODELS first}"
 
     volumes:
-      - "/container_data/ollama/ollama-data:/root/.ollama"
+      - "${CONTAINER_DATA_DIR:-/container_data}/ollama/ollama-data:/root/.ollama"
 
     entrypoint:
       - /bin/sh
@@ -63,22 +63,3 @@ services:
           ollama pull "$$model"
         done
 
-  open-webui:
-    image: ghcr.io/open-webui/open-webui:main-slim
-    container_name: open-webui
-    restart: always
-
-    ports:
-      - "3000:8080"
-
-    environment:
-      OLLAMA_BASE_URL: http://ollama:11435
-
-    volumes:
-      - "/container_data/open-webui/open-webui-data:/app/backend/data"
-
-    depends_on:
-      ollama:
-        condition: service_healthy
-      ollama-init:
-        condition: service_completed_successfully
