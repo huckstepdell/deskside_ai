@@ -20,7 +20,7 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
+5~share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
@@ -218,6 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Mine
-gb10/ollama/docker/start.sh
-gb10/ollama/docker/stop.sh
 gb10/ollama/sync-app.sh
