@@ -1,0 +1,52 @@
+model_list:
+  - model_name: tier1-local-npu
+    litellm_params:
+      model: openai/qwen2.5-coder-1.5b
+      api_base: http://host.docker.internal:56194/v1   # host, reached from container
+      api_key: "not-needed"
+    model_info:
+      max_input_tokens: 4096
+
+  - model_name: tier2-blackwell
+    litellm_params:
+      model: ollama_chat/qwen2.5-coder:14b
+      api_base: os.environ/BLACKWELL_BASE
+      num_ctx: 8192
+    model_info:
+      supports_function_calling: true
+
+  - model_name: tier3-gb10
+    litellm_params:
+      model: ollama_chat/qwen3-coder-next:q4_K_M
+      api_base: os.environ/GB10_BASE
+      num_ctx: 65536
+    model_info:
+      supports_function_calling: true
+
+  - model_name: plan-deep
+    litellm_params:
+      model: ollama_chat/gpt-oss:latest
+      api_base: os.environ/GB10_BASE
+      num_ctx: 65536
+    model_info:
+      supports_function_calling: true
+
+litellm_settings:
+  drop_params: true
+  num_retries: 1
+  request_timeout: 900
+  fallbacks:
+    - tier3-gb10: [tier2-blackwell, tier1-local-npu]
+    - tier2-blackwell: [tier1-local-npu]
+    - plan-deep: [tier3-gb10, tier2-blackwell]
+  context_window_fallbacks:
+    - tier2-blackwell: [tier3-gb10]
+
+router_settings:
+  routing_strategy: simple-shuffle
+  enable_pre_call_checks: true
+  allowed_fails: 2
+  cooldown_time: 60
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

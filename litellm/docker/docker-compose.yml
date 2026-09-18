@@ -1,0 +1,35 @@
+services:
+  litellm-db:
+    image: postgres:16
+    container_name: litellm-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: litellm
+      POSTGRES_PASSWORD: litellm
+      POSTGRES_DB: litellm
+    volumes:
+      - litellm-pgdata:/var/lib/postgresql/data
+
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: litellm
+    restart: unless-stopped
+    depends_on:
+      - litellm-db
+    ports:
+      - "4000:4000"
+    volumes:
+      - "./config.yaml:/app/config.yaml:ro"
+    environment:
+      GB10_BASE: "${GB10_BASE}"
+      BLACKWELL_BASE: "${BLACKWELL_BASE}"
+      LITELLM_MASTER_KEY: "${LITELLM_MASTER_KEY}"
+      DATABASE_URL: "postgresql://litellm:litellm@litellm-db:5432/litellm"
+      UI_USERNAME: "admin"
+      UI_PASSWORD: "${LITELLM_MASTER_KEY}"
+    command: ["--config", "/app/config.yaml", "--port", "4000"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  litellm-pgdata:
