@@ -47,7 +47,7 @@ try {
         throw "docker compose pull failed with exit code $LASTEXITCODE."
     }
 
-    & docker compose @composeFiles up -d --remove-orphans
+    & docker compose @composeFiles up -d --force-recreate --remove-orphans
     if ($LASTEXITCODE -ne 0) {
         throw "docker compose up failed with exit code $LASTEXITCODE."
     }
