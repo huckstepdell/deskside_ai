@@ -4,9 +4,9 @@ param(
 )
 
 $models = @(
-    "qwen2.5-coder-0.5b",
-    "qwen2.5-coder-1.5b"
-    #"qwen2.5-coder-7b"
+    #"qwen2.5-coder-0.5b",
+    #"qwen2.5-coder-1.5b"
+    "qwen2.5-coder-7b"
 )
 
 if ($Model -ne "all") {

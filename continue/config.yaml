@@ -1,0 +1,83 @@
+# ============================================================
+# Continue config — ~/.continue/config.yaml
+# Windows: C:\Users\<you>\.continue\config.yaml
+# Sane token settings. Replace <YOUR_MASTER_KEY> with the LiteLLM key.
+# (Continue does not resolve op:// refs — paste the literal key; keep this file out of git.)
+# ============================================================
+
+name: AI Stack Demo
+version: 1.0.0
+schema: v1
+
+models:
+  # --- Autocomplete: routed through LiteLLM (experiment) ---
+  # model: autocomplete-fim -> ollama/qwen2.5-coder:1.5b-base on the Blackwell.
+  # If middle-fill 404s or ignores code after the cursor, the router is dropping
+  # `suffix` — switch to the direct block below.
+  - name: Autocomplete (via router FIM)
+    provider: openai
+    model: autocomplete-fim
+    apiBase: http://localhost:4000/v1
+    apiKey: <YOUR_MASTER_KEY>
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 250
+      maxPromptTokens: 1024
+
+  # --- FALLBACK: direct-to-Blackwell autocomplete (known-good FIM path) ---
+  # Uncomment this and comment out the routed block above if the router
+  # drops `suffix`. Native ollama provider guarantees correct FIM templating.
+  # - name: Autocomplete (Blackwell direct FIM)
+  #   provider: ollama
+  #   model: qwen2.5-coder:1.5b-base
+  #   apiBase: http://100.64.2.98:11435
+  #   roles:
+  #     - autocomplete
+  #   autocompleteOptions:
+  #     debounceDelay: 250
+  #     maxPromptTokens: 1024
+
+  # --- Rung 1: Pro 7 NPU chat (Foundry coder-7b via router) ---
+  # The "local / private / offline" tier — still answers with Tailscale OFF.
+  - name: Chat (Pro 7 NPU - local)
+    provider: openai
+    model: tier1-local-npu
+    apiBase: http://localhost:4000/v1
+    apiKey: <YOUR_MASTER_KEY>
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      maxTokens: 1024
+
+  # --- Rung 2: Blackwell 14B chat ---
+  - name: Chat (Blackwell 14B)
+    provider: openai
+    model: tier2-blackwell
+    apiBase: http://localhost:4000/v1
+    apiKey: <YOUR_MASTER_KEY>
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      maxTokens: 2048
+
+  # --- Rung 3: GB10 heavyweight chat ---
+  - name: Chat (GB10 Deep)
+    provider: openai
+    model: tier3-gb10
+    apiBase: http://localhost:4000/v1
+    apiKey: <YOUR_MASTER_KEY>
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      maxTokens: 4096

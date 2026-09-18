@@ -1,12 +1,20 @@
+# ============================================================
+# LiteLLM router config — AI Stack Demo (sane settings)
+# Runs in Docker on the Pro 7. Fronts three hardware rungs.
+# Autocomplete now routed through the router (experiment).
+# ============================================================
+
 model_list:
+  # ---- Rung 1: Pro 7 NPU (Foundry Local, on the host) ----
   - model_name: tier1-local-npu
     litellm_params:
-      model: openai/qwen2.5-coder-1.5b
-      api_base: http://host.docker.internal:56194/v1   # host, reached from container
+      model: openai/qwen2.5-coder-7b
+      api_base: http://host.docker.internal:56194/v1
       api_key: "not-needed"
     model_info:
       max_input_tokens: 4096
 
+  # ---- Rung 2: Pro Max Blackwell (Ollama over Tailscale) ----
   - model_name: tier2-blackwell
     litellm_params:
       model: ollama_chat/qwen2.5-coder:14b
@@ -15,6 +23,7 @@ model_list:
     model_info:
       supports_function_calling: true
 
+  # ---- Rung 3: GB10 (Ollama over Tailscale) ----
   - model_name: tier3-gb10
     litellm_params:
       model: ollama_chat/qwen3-coder-next:q4_K_M
@@ -23,6 +32,7 @@ model_list:
     model_info:
       supports_function_calling: true
 
+  # ---- GB10 planning/review model (Cline Plan mode) ----
   - model_name: plan-deep
     litellm_params:
       model: ollama_chat/gpt-oss:latest
@@ -31,10 +41,20 @@ model_list:
     model_info:
       supports_function_calling: true
 
+  # ---- Autocomplete / FIM (Blackwell Ollama) ----
+  # ollama/ (NOT ollama_chat/) = the completion path that preserves `suffix`
+  # for fill-in-the-middle. ollama_chat/ would strip FIM and break autocomplete.
+  - model_name: autocomplete-fim
+    litellm_params:
+      model: ollama/qwen2.5-coder:1.5b-base
+      api_base: os.environ/BLACKWELL_BASE
+      num_ctx: 8192
+
 litellm_settings:
   drop_params: true
   num_retries: 1
   request_timeout: 900
+  # Climb DOWN the stack on failure -> offline safety net ends at the NPU.
   fallbacks:
     - tier3-gb10: [tier2-blackwell, tier1-local-npu]
     - tier2-blackwell: [tier1-local-npu]
