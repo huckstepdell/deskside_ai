@@ -8,7 +8,7 @@ model_list:
   # ---- Rung 1: Pro 7 NPU (Foundry Local, on the host) ----
   - model_name: tier1-local-npu
     litellm_params:
-      model: openai/qwen2.5-coder-7b
+      model: openai/qwen2.5-coder-1.5b
       api_base: http://host.docker.internal:56194/v1
       api_key: "not-needed"
     model_info:
