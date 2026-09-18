@@ -3,10 +3,11 @@
     start-litellm.ps1
     -----------------
     Brings up the LiteLLM router stack with secrets pulled from 1Password,
-    waits for the container to be healthy, then smoke-tests all three tiers:
-        tier1-local-npu   -> Pro 7  (Foundry Local, NPU, via host.docker.internal)
-        tier2-blackwell   -> Pro Max (Ollama)
-        tier3-gb10        -> GB10    (Ollama)
+    waits for the container to be healthy, then smoke-tests the tiers:
+        tier1-local-npu   -> Pro 7   (Foundry Local, qwen2.5-coder-1.5b, NPU)
+        tier2-blackwell   -> Pro Max (Ollama, qwen2.5-coder:14b)
+        tier3-gb10        -> GB10     (Ollama, qwen3-coder-next)
+        autocomplete-fim  -> Pro Max (Ollama, qwen2.5-coder:1.5b-base, FIM)
 
     Usage:
         .\start-litellm.ps1                # bring up + smoke test
@@ -63,7 +64,6 @@ Write-Ok "op, $EnvFile, and docker-compose.yml present."
 # --- 2. Ensure a 1Password session -------------------------------------------
 Write-Step "1Password sign-in"
 try {
-    # If no valid session this throws; --raw keeps it quiet on success
     op whoami *> $null
     Write-Ok "Existing 1Password session found."
 } catch {
@@ -101,7 +101,7 @@ Write-Ok "Router is answering on $RouterUrl."
 
 # --- 5. Smoke-test each tier --------------------------------------------------
 if (-not $SkipTests) {
-    Write-Step "Smoke-testing all three tiers"
+    Write-Step "Smoke-testing chat tiers"
     $tiers = @("tier1-local-npu", "tier2-blackwell", "tier3-gb10")
     $results = @()
     foreach ($tier in $tiers) {
@@ -126,16 +126,45 @@ if (-not $SkipTests) {
         }
     }
 
+    # --- 5b. FIM autocomplete tier (uses /v1/completions with prompt + suffix) ---
+    Write-Step "Smoke-testing FIM autocomplete (autocomplete-fim)"
+    $fimBody = @{
+        model      = "autocomplete-fim"
+        prompt     = "def reverse_string(s):`n    "
+        suffix     = "`n    return result"
+        max_tokens = 32
+    } | ConvertTo-Json -Depth 5
+
+    try {
+        $sw = [System.Diagnostics.Stopwatch]::StartNew()
+        $fimResp = Invoke-RestMethod -Uri "$RouterUrl/v1/completions" `
+                    -Method Post -ContentType "application/json" `
+                    -Headers $headers -Body $fimBody -TimeoutSec 60
+        $sw.Stop()
+        $fimText = $fimResp.choices[0].text
+        if ([string]::IsNullOrWhiteSpace($fimText)) {
+            Write-Warn ("{0,-18} responded EMPTY in {1} ms  -> router may be dropping `suffix`." -f "autocomplete-fim", $sw.ElapsedMilliseconds)
+            $results += [pscustomobject]@{ Tier="autocomplete-fim"; Status="EMPTY"; Ms=$sw.ElapsedMilliseconds }
+        } else {
+            Write-Ok ("{0,-18} completed in {1,5} ms  -> {2}" -f "autocomplete-fim", $sw.ElapsedMilliseconds, ($fimText -replace '\s+',' ').Trim())
+            $results += [pscustomobject]@{ Tier="autocomplete-fim"; Status="OK"; Ms=$sw.ElapsedMilliseconds }
+        }
+    } catch {
+        Write-Warn ("{0,-18} FAILED: {1}" -f "autocomplete-fim", $_.Exception.Message)
+        $results += [pscustomobject]@{ Tier="autocomplete-fim"; Status="FAIL"; Ms=$null }
+    }
+
     Write-Step "Summary"
     $results | Format-Table -AutoSize
 
-    if ($results.Where({$_.Status -eq "FAIL"}).Count -gt 0) {
+    if ($results.Where({$_.Status -in @("FAIL","EMPTY")}).Count -gt 0) {
         Write-Warn "One or more tiers failed. Reminders:"
-        Write-Warn "  - tier1 fails  -> check 'foundry service status' (port is dynamic; was 56194)."
-        Write-Warn "  - tier2/3 fail -> check Tailscale is up + Ollama bound to 0.0.0.0:11435 on that host."
-        Write-Warn "  - Fallbacks route failed tiers down to tier1-local-npu (NPU) automatically."
+        Write-Warn "  - tier1 fails        -> check 'foundry service status' (port is dynamic; was 56194)."
+        Write-Warn "  - tier2/3 fail       -> check Tailscale is up + Ollama bound to 0.0.0.0:11435 on that host."
+        Write-Warn "  - autocomplete-fim   -> 404/EMPTY means router drops FIM; use direct-to-Blackwell in Continue."
+        Write-Warn "  - Chat fallbacks route failed tiers down to tier1-local-npu (NPU) automatically."
     } else {
-        Write-Ok "All three tiers responded. Stack is live end to end."
+        Write-Ok "All tiers responded (chat + FIM). Stack is live end to end."
     }
 }
 
