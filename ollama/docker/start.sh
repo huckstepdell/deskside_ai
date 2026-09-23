@@ -21,7 +21,7 @@ while true; do
 			;;
 		2)
 			model_list="gb10.txt"
-			compose_args=(-f docker-compose.yml -f docker-compose.gb10.yml -f docker-compose.webui.yml)
+			compose_args=(-f docker-compose.yml -f docker-compose.gb10.yml)
 			;;
 		*)
 			echo "Please enter 1 or 2."

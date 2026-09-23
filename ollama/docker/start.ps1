@@ -19,8 +19,7 @@ do {
             $modelList = "gb10.txt"
             $composeFiles = @(
                 "-f", "docker-compose.yml",
-                "-f", "docker-compose.gb10.yml",
-                "-f", "docker-compose.webui.yml"
+                "-f", "docker-compose.gb10.yml"
             )
         }
         default {
