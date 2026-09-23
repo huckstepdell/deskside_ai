@@ -1,3 +1,4 @@
+name: litellm
 services:
   litellm-db:
     image: postgres:16
