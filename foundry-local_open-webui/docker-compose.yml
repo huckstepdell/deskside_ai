@@ -1,0 +1,18 @@
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main-slim
+    container_name: open-webui
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Foundry Local (Pro 7 NPU) - primary local model
+      OPENAI_API_BASE_URLS: "http://host.docker.internal:56194/v1;http://host.docker.internal:4000/v1"
+      OPENAI_API_KEY: "not-needed;${LITELLM_VIRTUAL_KEY}"
+      ENABLE_OLLAMA_API: "false"
+      ENABLE_PERSISTENT_CONFIG: "false"
+    volumes:
+      - open-webui-data:/app/backend/data
+
+volumes:
+  open-webui-data:

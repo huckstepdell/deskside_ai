@@ -1,0 +1,9 @@
+{
+  "github.copilot.extraBody": {
+    "model": "Blackwell_autocomplete"
+  },
+  "github.copilot.proxy": "YOUR_LITELLM_BASE_URL",
+  "github.copilot.proxy_headers": {
+    "Authorization": "Bearer YOUR_LITELLM_MASTER_KEY"
+  }
+}

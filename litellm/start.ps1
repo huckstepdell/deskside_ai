@@ -3,11 +3,10 @@
     start-litellm.ps1
     -----------------
     Brings up the LiteLLM router stack with secrets pulled from 1Password,
-    waits for the container to be healthy, then smoke-tests the tiers:
-        tier1-local-npu   -> Pro 7   (Foundry Local, qwen2.5-coder-1.5b, NPU)
-        tier2-blackwell   -> Pro Max (Ollama, qwen2.5-coder:14b)
-        tier3-gb10        -> GB10     (Ollama, qwen3-coder-next)
-        autocomplete-fim  -> Pro Max (Ollama, qwen2.5-coder:1.5b-base, FIM)
+    waits for the container to be healthy, then smoke-tests the endpoints:
+        Blackwell_chat    -> Pro Max (Ollama, qwen2.5-coder:14b)
+        GB10_chat         -> GB10     (Ollama, qwen3-coder-next)
+        Blackwell_autocomplete -> Pro Max (Ollama, qwen2.5-coder:1.5b-base, FIM)
 
     Usage:
         .\start-litellm.ps1                # bring up + smoke test
@@ -99,14 +98,14 @@ if (-not $healthy) {
 }
 Write-Ok "Router is answering on $RouterUrl."
 
-# --- 5. Smoke-test each tier --------------------------------------------------
+# --- 5. Smoke-test endpoints --------------------------------------------------
 if (-not $SkipTests) {
-    Write-Step "Smoke-testing chat tiers"
-    $tiers = @("tier1-local-npu", "tier2-blackwell", "tier3-gb10")
+    Write-Step "Smoke-testing chat endpoints"
+    $endpoints = @("Blackwell_chat", "GB10_chat", "GB10_planning")
     $results = @()
-    foreach ($tier in $tiers) {
+    foreach ($endpoint in $endpoints) {
         $body = @{
-            model    = $tier
+            model    = $endpoint
             messages = @(@{ role = "user"; content = "Reply with the single word: OK" })
             max_tokens = 10
         } | ConvertTo-Json -Depth 5
@@ -118,18 +117,18 @@ if (-not $SkipTests) {
                         -Headers $headers -Body $body -TimeoutSec 120
             $sw.Stop()
             $text = $resp.choices[0].message.content
-            Write-Ok ("{0,-18} responded in {1,5} ms  -> {2}" -f $tier, $sw.ElapsedMilliseconds, ($text -replace '\s+',' ').Trim())
-            $results += [pscustomobject]@{ Tier=$tier; Status="OK"; Ms=$sw.ElapsedMilliseconds }
+            Write-Ok ("{0,-18} responded in {1,5} ms  -> {2}" -f $endpoint, $sw.ElapsedMilliseconds, ($text -replace '\s+',' ').Trim())
+            $results += [pscustomobject]@{ Endpoint=$endpoint; Status="OK"; Ms=$sw.ElapsedMilliseconds }
         } catch {
-            Write-Warn ("{0,-18} FAILED: {1}" -f $tier, $_.Exception.Message)
-            $results += [pscustomobject]@{ Tier=$tier; Status="FAIL"; Ms=$null }
+            Write-Warn ("{0,-18} FAILED: {1}" -f $endpoint, $_.Exception.Message)
+            $results += [pscustomobject]@{ Endpoint=$endpoint; Status="FAIL"; Ms=$null }
         }
     }
 
-    # --- 5b. FIM autocomplete tier (uses /v1/completions with prompt + suffix) ---
-    Write-Step "Smoke-testing FIM autocomplete (autocomplete-fim)"
+    # --- 5b. FIM autocomplete endpoint (uses /v1/completions with prompt + suffix) ---
+    Write-Step "Smoke-testing FIM autocomplete (Blackwell_autocomplete)"
     $fimBody = @{
-        model      = "autocomplete-fim"
+        model      = "Blackwell_autocomplete"
         prompt     = "def reverse_string(s):`n    "
         suffix     = "`n    return result"
         max_tokens = 32
@@ -143,28 +142,26 @@ if (-not $SkipTests) {
         $sw.Stop()
         $fimText = $fimResp.choices[0].text
         if ([string]::IsNullOrWhiteSpace($fimText)) {
-            Write-Warn ("{0,-18} responded EMPTY in {1} ms  -> router may be dropping `suffix`." -f "autocomplete-fim", $sw.ElapsedMilliseconds)
-            $results += [pscustomobject]@{ Tier="autocomplete-fim"; Status="EMPTY"; Ms=$sw.ElapsedMilliseconds }
+            Write-Warn ("{0,-18} responded EMPTY in {1} ms  -> router may be dropping `suffix`." -f "Blackwell_autocomplete", $sw.ElapsedMilliseconds)
+            $results += [pscustomobject]@{ Endpoint="Blackwell_autocomplete"; Status="EMPTY"; Ms=$sw.ElapsedMilliseconds }
         } else {
-            Write-Ok ("{0,-18} completed in {1,5} ms  -> {2}" -f "autocomplete-fim", $sw.ElapsedMilliseconds, ($fimText -replace '\s+',' ').Trim())
-            $results += [pscustomobject]@{ Tier="autocomplete-fim"; Status="OK"; Ms=$sw.ElapsedMilliseconds }
+            Write-Ok ("{0,-18} completed in {1,5} ms  -> {2}" -f "Blackwell_autocomplete", $sw.ElapsedMilliseconds, ($fimText -replace '\s+',' ').Trim())
+            $results += [pscustomobject]@{ Endpoint="Blackwell_autocomplete"; Status="OK"; Ms=$sw.ElapsedMilliseconds }
         }
     } catch {
-        Write-Warn ("{0,-18} FAILED: {1}" -f "autocomplete-fim", $_.Exception.Message)
-        $results += [pscustomobject]@{ Tier="autocomplete-fim"; Status="FAIL"; Ms=$null }
+        Write-Warn ("{0,-18} FAILED: {1}" -f "Blackwell_autocomplete", $_.Exception.Message)
+        $results += [pscustomobject]@{ Endpoint="Blackwell_autocomplete"; Status="FAIL"; Ms=$null }
     }
 
     Write-Step "Summary"
     $results | Format-Table -AutoSize
 
     if ($results.Where({$_.Status -in @("FAIL","EMPTY")}).Count -gt 0) {
-        Write-Warn "One or more tiers failed. Reminders:"
-        Write-Warn "  - tier1 fails        -> check 'foundry service status' (port is dynamic; was 56194)."
-        Write-Warn "  - tier2/3 fail       -> check Tailscale is up + Ollama bound to 0.0.0.0:11435 on that host."
-        Write-Warn "  - autocomplete-fim   -> 404/EMPTY means router drops FIM; use direct-to-Blackwell in Continue."
-        Write-Warn "  - Chat fallbacks route failed tiers down to tier1-local-npu (NPU) automatically."
+        Write-Warn "One or more endpoints failed. Reminders:"
+        Write-Warn "  - Blackwell/GB10 chat -> check Tailscale is up + Ollama bound to 0.0.0.0:11435 on that host."
+        Write-Warn "  - Blackwell_autocomplete -> 404/EMPTY means router drops FIM; use direct-to-Blackwell in Continue."
     } else {
-        Write-Ok "All tiers responded (chat + FIM). Stack is live end to end."
+        Write-Ok "All endpoints responded (chat + FIM). Stack is live end to end."
     }
 }
 

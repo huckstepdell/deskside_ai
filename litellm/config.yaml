@@ -5,17 +5,8 @@
 # ============================================================
 
 model_list:
-  # ---- Rung 1: Pro 7 NPU (Foundry Local, on the host) ----
-  - model_name: tier1-local-npu
-    litellm_params:
-      model: openai/qwen2.5-coder-1.5b
-      api_base: http://host.docker.internal:56194/v1
-      api_key: "not-needed"
-    model_info:
-      max_input_tokens: 4096
-
-  # ---- Rung 2: Pro Max Blackwell (Ollama over Tailscale) ----
-  - model_name: tier2-blackwell
+  # ---- Chat: Pro Max Blackwell (Ollama over Tailscale) ----
+  - model_name: Blackwell_chat
     litellm_params:
       model: ollama_chat/qwen2.5-coder:14b
       api_base: os.environ/BLACKWELL_BASE
@@ -23,8 +14,8 @@ model_list:
     model_info:
       supports_function_calling: true
 
-  # ---- Rung 3: GB10 (Ollama over Tailscale) ----
-  - model_name: tier3-gb10
+  # ---- Chat: GB10 (Ollama over Tailscale) ----
+  - model_name: GB10_chat
     litellm_params:
       model: ollama_chat/qwen3-coder-next:q4_K_M
       api_base: os.environ/GB10_BASE
@@ -32,8 +23,8 @@ model_list:
     model_info:
       supports_function_calling: true
 
-  # ---- GB10 planning/review model (Cline Plan mode) ----
-  - model_name: plan-deep
+  # ---- Planning: GB10 (Cline Plan mode) ----
+  - model_name: GB10_planning
     litellm_params:
       model: ollama_chat/gpt-oss:latest
       api_base: os.environ/GB10_BASE
@@ -41,10 +32,10 @@ model_list:
     model_info:
       supports_function_calling: true
 
-  # ---- Autocomplete / FIM (Blackwell Ollama) ----
+  # ---- Autocomplete / FIM: Blackwell Ollama ----
   # ollama/ (NOT ollama_chat/) = the completion path that preserves `suffix`
   # for fill-in-the-middle. ollama_chat/ would strip FIM and break autocomplete.
-  - model_name: autocomplete-fim
+  - model_name: Blackwell_autocomplete
     litellm_params:
       model: ollama/qwen2.5-coder:1.5b-base
       api_base: os.environ/BLACKWELL_BASE
@@ -54,13 +45,11 @@ litellm_settings:
   drop_params: true
   num_retries: 1
   request_timeout: 900
-  # Climb DOWN the stack on failure -> offline safety net ends at the NPU.
   fallbacks:
-    - tier3-gb10: [tier2-blackwell, tier1-local-npu]
-    - tier2-blackwell: [tier1-local-npu]
-    - plan-deep: [tier3-gb10, tier2-blackwell]
+    - GB10_chat: [Blackwell_chat]
+    - GB10_planning: [GB10_chat, Blackwell_chat]
   context_window_fallbacks:
-    - tier2-blackwell: [tier3-gb10]
+    - Blackwell_chat: [GB10_chat]
 
 router_settings:
   routing_strategy: simple-shuffle
@@ -70,3 +59,4 @@ router_settings:
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
+  disable_env_credential_login: true
