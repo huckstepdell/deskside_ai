@@ -1,5 +1,13 @@
-export PULL_MODELS="qwen3-coder-next:q4_K_M devstral-small-2:24b"
+#!/usr/bin/env bash
+
+set -eu
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd -- "${SCRIPT_DIR}"
-export CONTAINER_DATA_DIR="/container_data"
-docker compose -f docker-compose.yml -f docker-compose.webui.yml down
+
+# PULL_MODELS is only required by compose for variable interpolation; value is irrelevant for teardown.
+export PULL_MODELS="${PULL_MODELS:-unused}"
+export CONTAINER_DATA_DIR="${CONTAINER_DATA_DIR:-/container_data}"
+
+# Base file alone is sufficient: device overlays only patch env vars on the same services/containers.
+docker compose -f docker-compose.yml down --remove-orphans
