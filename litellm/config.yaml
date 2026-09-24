@@ -5,6 +5,14 @@
 # ============================================================
 
 model_list:
+  - model_name: Foundry_npu
+    litellm_params:
+      model: openai/qwen2.5-coder-1.5b
+      api_base: http://host.docker.internal:56194/v1
+      api_key: not-needed
+    model_info:
+      supports_function_calling: true
+      supports_native_streaming: false     # <-- forces fake-streaming; non-streaming upstream, clean stream to client
   # ---- Chat: Pro Max Blackwell (Ollama over Tailscale) ----
   - model_name: Blackwell_chat
     litellm_params:
@@ -26,7 +34,7 @@ model_list:
   # ---- Planning: GB10 (Cline Plan mode) ----
   - model_name: GB10_planning
     litellm_params:
-      model: ollama_chat/gpt-oss:latest
+      model: ollama_chat/qwen3.8:latest
       api_base: os.environ/GB10_BASE
       num_ctx: 65536
     model_info:

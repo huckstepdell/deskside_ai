@@ -44,7 +44,7 @@ model_lists/
 
 - **Foundry Local** – Local NPU model hosting (qwen2.5-coder-1.5b).  Started via `foundry-local_open-webui/start.ps1`.
 - **LiteLLM** – Router that exposes multiple model tiers (Blackwell, GB10, planning, autocomplete).  Configured in `litellm/docker/config.yaml`.
-- **Ollama** – Dockerized LLM runtime for GB10 and Blackwell.
+- **Ollama** – Dockerized LLM runtime for GB10 and Blackwell.  **Must be running on the GB10 and Blackwell workstations** to serve the models.
 - **Open WebUI** – Web UI for interacting with the models.  Started via `foundry-local_open-webui/start.ps1`.
 - **npmplus** – Node‑based utilities (not detailed here).
 - **ollama** – Additional Docker Compose files for different model setups.
