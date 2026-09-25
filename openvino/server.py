@@ -1,5 +1,7 @@
+import atexit
 import json
 import os
+import signal
 import threading
 import time
 import uuid
@@ -16,7 +18,9 @@ MODELS_FILE = ROOT / "models.txt"
 
 HOST = os.getenv("OPENVINO_SERVER_HOST", "127.0.0.1")
 PORT = int(os.getenv("OPENVINO_SERVER_PORT", "4001"))
+PID_FILE = ROOT / "server.pid"
 MAX_BODY_BYTES = 10 * 1024 * 1024
+
 
 @dataclass(frozen=True)
 class ModelSpec:
@@ -35,6 +39,7 @@ class ModelSpec:
             return path
 
         return MODELS_ROOT / path
+
 
 class ModelRuntime:
     def __init__(self, spec: ModelSpec):
@@ -92,6 +97,7 @@ class ModelRuntime:
                 )
 
         return str(result)
+
 
 def load_model_specs() -> list[ModelSpec]:
     if not MODELS_FILE.exists():
@@ -156,6 +162,7 @@ def load_model_specs() -> list[ModelSpec]:
 
     return specs
 
+
 def load_runtimes() -> dict[str, ModelRuntime]:
     specs = load_model_specs()
     runtimes: dict[str, ModelRuntime] = {}
@@ -181,6 +188,7 @@ def load_runtimes() -> dict[str, ModelRuntime]:
 
     return runtimes
 
+
 RUNTIMES = load_runtimes()
 
 MODEL_BY_NAME: dict[str, ModelRuntime] = {}
@@ -195,6 +203,7 @@ for runtime in RUNTIMES.values():
         )
 
     MODEL_BY_NAME[model_key] = runtime
+
 
 def select_runtime(
     requested_model: str | None,
@@ -220,6 +229,7 @@ def select_runtime(
 
     return runtime
 
+
 def normalize_message_content(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -237,6 +247,7 @@ def normalize_message_content(content: Any) -> str:
         return "".join(parts)
 
     return str(content)
+
 
 def build_chat_prompt(
     messages: list[dict[str, Any]],
@@ -262,6 +273,7 @@ def build_chat_prompt(
 
     return "".join(prompt_parts)
 
+
 def get_generation_parameters(
     payload: dict[str, Any],
 ) -> tuple[int, float, float]:
@@ -278,6 +290,7 @@ def get_generation_parameters(
         float(temperature),
         float(top_p),
     )
+
 
 def make_chat_response(
     model_name: str,
@@ -305,6 +318,7 @@ def make_chat_response(
         },
     }
 
+
 def make_completion_response(
     model_name: str,
     output: str,
@@ -327,6 +341,98 @@ def make_completion_response(
             "total_tokens": 0,
         },
     }
+
+
+def pid_is_running(pid: int) -> bool:
+    if pid <= 0:
+        return False
+
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+
+    return True
+
+
+def write_pid_file() -> None:
+    PID_FILE.parent.mkdir(parents=True, exist_ok=True)
+
+    if PID_FILE.exists():
+        try:
+            existing_pid = int(
+                PID_FILE.read_text(encoding="utf-8").strip()
+            )
+        except (OSError, ValueError):
+            existing_pid = 0
+
+        if (
+            existing_pid
+            and existing_pid != os.getpid()
+            and pid_is_running(existing_pid)
+        ):
+            raise RuntimeError(
+                f"PID file already belongs to a running process: "
+                f"{PID_FILE} (PID {existing_pid})"
+            )
+
+        PID_FILE.unlink(missing_ok=True)
+
+    temporary_pid_file = PID_FILE.with_suffix(
+        PID_FILE.suffix + ".tmp"
+    )
+    temporary_pid_file.write_text(
+        f"{os.getpid()}\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary_pid_file, PID_FILE)
+
+    print(
+        f"Wrote PID file: {PID_FILE} "
+        f"(PID {os.getpid()})",
+        flush=True,
+    )
+
+
+def remove_pid_file() -> None:
+    try:
+        if not PID_FILE.exists():
+            return
+
+        contents = PID_FILE.read_text(
+            encoding="utf-8"
+        ).strip()
+
+        if contents == str(os.getpid()):
+            PID_FILE.unlink(missing_ok=True)
+            print(
+                f"Removed PID file: {PID_FILE}",
+                flush=True,
+            )
+    except OSError as exc:
+        print(
+            f"Could not remove PID file {PID_FILE}: {exc}",
+            flush=True,
+        )
+
+
+def handle_shutdown_signal(
+    signum: int,
+    _frame: Any,
+) -> None:
+    print(
+        f"Received signal {signum}; stopping server.",
+        flush=True,
+    )
+    raise KeyboardInterrupt
+
+
+atexit.register(remove_pid_file)
+
 
 class OpenAIHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -423,6 +529,8 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             self.send_json(
                 {
                     "status": "ok",
+                    "pid": os.getpid(),
+                    "pid_file": str(PID_FILE),
                     "models": [
                         runtime.spec.name
                         for runtime in MODEL_BY_NAME.values()
@@ -594,6 +702,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             flush=True,
         )
 
+
 def main() -> None:
     server = ThreadingHTTPServer(
         (HOST, PORT),
@@ -601,6 +710,10 @@ def main() -> None:
     )
 
     server.daemon_threads = True
+    write_pid_file()
+
+    signal.signal(signal.SIGTERM, handle_shutdown_signal)
+    signal.signal(signal.SIGINT, handle_shutdown_signal)
 
     print(
         f"OpenAI-compatible server listening on "
@@ -621,6 +734,8 @@ def main() -> None:
         print("\nStopping server.", flush=True)
     finally:
         server.server_close()
+        remove_pid_file()
+
 
 if __name__ == "__main__":
     main()
