@@ -1,0 +1,93 @@
+{
+  "version": "0.4.2",
+  "baseUrl": "",
+  "apiKey": "",
+  "delay": 0,
+  "retry": {
+    "enabled": false,
+    "max_attempts": 3,
+    "interval_ms": 1000,
+    "status_codes": []
+  },
+  "commitLanguage": "English",
+  "commitModel": "npu-act-qwen25-coder-0p5b-instruct::npu-instruct",
+  "models": [
+    {
+      "id": "__provider__LiteLLM",
+      "owned_by": "LiteLLM",
+      "baseUrl": "http://localhost:4000/v1",
+      "apiMode": "openai"
+    },
+    {
+      "id": "blackwell-act-qwen25-coder-14b",
+      "owned_by": "LiteLLM",
+      "displayName": "Blackwell coding",
+      "configId": "blackwell-act",
+      "baseUrl": "http://localhost:4000/v1",
+      "context_length": 8192,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 4096
+    },
+    {
+      "id": "gb10-act-qwen3-coder-next",
+      "owned_by": "LiteLLM",
+      "displayName": "GB10 coding",
+      "configId": "gb10-act",
+      "baseUrl": "http://localhost:4000/v1",
+      "context_length": 65536,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 8192
+    },
+    {
+      "id": "gb10-plan-qwen38-27b",
+      "owned_by": "LiteLLM",
+      "displayName": "GB10 planning",
+      "configId": "gb10-plan",
+      "baseUrl": "http://localhost:4000/v1",
+      "context_length": 65536,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 12288
+    },
+    {
+      "id": "npu-act-qwen25-coder-0p5b-instruct",
+      "owned_by": "LiteLLM",
+      "displayName": "NPU chat/agent",
+      "configId": "npu-instruct",
+      "baseUrl": "http://localhost:4000/v1",
+      "context_length": 8192,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 2048,
+      "useForCommitGeneration": true
+    },
+    {
+      "id": "blackwell-fim-qwen25-coder-1p5b",
+      "owned_by": "LiteLLM",
+      "displayName": "Blackwell autocomplete/FIM",
+      "configId": "blackwell-fim",
+      "baseUrl": "http://localhost:4000/v1",
+      "context_length": 8192,
+      "apiMode": "openai",
+      "temperature": 0,
+      "max_completion_tokens": 256
+    },
+    {
+      "id": "npu-fim-qwen25-coder-0p5b",
+      "owned_by": "LiteLLM",
+      "displayName": "NPU autocomplete/FIM",
+      "configId": "npu-fim",
+      "baseUrl": "http://localhost:4000/v1",
+      "context_length": 8192,
+      "apiMode": "openai",
+      "temperature": 0,
+      "max_completion_tokens": 256
+    }
+  ],
+  "readFileLines": 0,
+  "providerKeys": {
+    "LiteLLM": "<<Your LiteLLM Virtual or Master Key>>"
+  }
+}

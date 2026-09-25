@@ -1,26 +1,28 @@
 # ============================================================
 # LiteLLM router config — AI Stack Demo
-# Runs in Docker on the Pro 7 and fronts three hardware tiers.
-#
-# Alias convention:
-#   <tier>-<role>-<model>
-#
-# Runtime requirements:
-#   - GB10 Ollama must be configured for at least 65536 context.
-#   - Blackwell Ollama must be configured for at least 8192 context.
-#   - Foundry remains non-streaming upstream; LiteLLM fake-streams it.
 # ============================================================
 
 model_list:
-  # ---- NPU: fast local coding tier ----
-  - model_name: npu-act-qwen25-coder-1p5b
+  # ---- NPU: Instruct/chat tier ----
+  - model_name: npu-act-qwen25-coder-0p5b-instruct
     litellm_params:
-      model: "openai/qwen2.5-coder-1.5b"
-      api_base: "http://host.docker.internal:56194/v1"
+      model: "openai/npu-chat-qwen25-coder-0p5b-instruct"
+      api_base: "http://host.docker.internal:4001/v1"
       api_key: not-needed
       max_tokens: 2048
     model_info:
-      supports_function_calling: true
+      supports_function_calling: false
+      supports_native_streaming: false
+
+  # ---- NPU: Base/FIM tier ----
+  - model_name: npu-fim-qwen25-coder-0p5b
+    litellm_params:
+      model: "openai/npu-fim-qwen25-coder-0p5b"
+      api_base: "http://host.docker.internal:4001/v1"
+      api_key: not-needed
+      max_tokens: 256
+    model_info:
+      supports_function_calling: false
       supports_native_streaming: false
 
   # ---- Blackwell: Act/coding tier ----
@@ -54,7 +56,6 @@ model_list:
       supports_function_calling: true
 
   # ---- Blackwell: FIM autocomplete tier ----
-  # ollama/ (not ollama_chat/) preserves the suffix required for FIM.
   - model_name: blackwell-fim-qwen25-coder-1p5b
     litellm_params:
       model: "ollama/qwen2.5-coder:1.5b-base"
@@ -69,21 +70,28 @@ litellm_settings:
   num_retries: 1
   request_timeout: 900
 
-  # Availability fallbacks.
   fallbacks:
-    - npu-act-qwen25-coder-1p5b:
+    - npu-act-qwen25-coder-0p5b-instruct:
         - blackwell-act-qwen25-coder-14b
         - gb10-act-qwen3-coder-next
+
+    - npu-fim-qwen25-coder-0p5b:
+        - blackwell-fim-qwen25-coder-1p5b
+
     - gb10-act-qwen3-coder-next:
         - blackwell-act-qwen25-coder-14b
+
     - gb10-plan-qwen38-27b:
         - gb10-act-qwen3-coder-next
 
-  # Context-size fallbacks. These are separate from availability fallbacks.
   context_window_fallbacks:
-    - npu-act-qwen25-coder-1p5b:
+    - npu-act-qwen25-coder-0p5b-instruct:
         - blackwell-act-qwen25-coder-14b
         - gb10-act-qwen3-coder-next
+
+    - npu-fim-qwen25-coder-0p5b:
+        - blackwell-fim-qwen25-coder-1p5b
+
     - blackwell-act-qwen25-coder-14b:
         - gb10-act-qwen3-coder-next
 
