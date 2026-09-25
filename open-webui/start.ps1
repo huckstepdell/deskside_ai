@@ -1,23 +1,13 @@
 param(
-    [ValidateSet("qwen2.5-coder-7b", "qwen2.5-coder-1.5b", "qwen2.5-coder-0.5b", "all")]
-    [string]$Model = "all",
-    [string]$EnvFile = ".env"
+    [string]$EnvFile = ".env",
+    [string]$WebUiUrl = "http://localhost:8080",
+    [int]$HealthTimeoutSec = 60
 )
 
 function Write-Step($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
 function Write-Ok($msg)   { Write-Host "  [OK] $msg"   -ForegroundColor Green }
 function Write-Warn($msg) { Write-Host "  [!!] $msg"   -ForegroundColor Yellow }
 function Write-Err($msg)  { Write-Host "  [XX] $msg"   -ForegroundColor Red }
-
-$models = @(
-    "qwen2.5-coder-0.5b",
-    "qwen2.5-coder-1.5b"
-    #"qwen2.5-coder-7b"
-)
-
-if ($Model -ne "all") {
-    $models = @($Model)
-}
 
 # --- Preflight checks ---------------------------------------------------------
 Write-Step "Preflight"
@@ -43,24 +33,27 @@ try {
     Write-Ok "Signed in."
 }
 
-Write-Host "Starting Foundry Local server..." -ForegroundColor Cyan
-foundry server start -p 56194
-
-foreach ($modelName in $models) {
-    Write-Host "Loading model: $modelName" -ForegroundColor Yellow
-    foundry model load $modelName
-}
-
-foundry status
-
-Write-Host ""
-Write-Host "Available models:" -ForegroundColor Cyan
-foreach ($modelName in $models) {
-    Write-Host "  - $modelName"
-}
-
-# Start Open WebUI via op run to resolve 1Password secrets at runtime
-Write-Host ""
-Write-Host "Starting Open WebUI..." -ForegroundColor Cyan
+# --- Start Open WebUI via op run to resolve 1Password secrets at runtime -----
+Write-Step "Starting Open WebUI"
 op run --env-file="$EnvFile" -- docker compose -f docker-compose.yml up -d open-webui
-Write-Ok "Open WebUI started on http://localhost:8080"
+Write-Ok "Compose up issued."
+
+# --- Wait for Open WebUI to answer -------------------------------------------
+Write-Step "Waiting for Open WebUI to become healthy (timeout ${HealthTimeoutSec}s)"
+$deadline = (Get-Date).AddSeconds($HealthTimeoutSec)
+$healthy = $false
+while ((Get-Date) -lt $deadline) {
+    try {
+        $null = Invoke-WebRequest -Uri "$WebUiUrl/health" -TimeoutSec 5 -UseBasicParsing
+        $healthy = $true
+        break
+    } catch {
+        Start-Sleep -Seconds 3
+        Write-Host "  ...waiting" -ForegroundColor DarkGray
+    }
+}
+if (-not $healthy) {
+    Write-Err "Open WebUI did not respond within ${HealthTimeoutSec}s. Check: docker compose logs open-webui"
+    exit 1
+}
+Write-Ok "Open WebUI is answering on $WebUiUrl."

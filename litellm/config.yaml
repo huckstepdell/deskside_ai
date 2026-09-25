@@ -1,63 +1,91 @@
 # ============================================================
-# LiteLLM router config — AI Stack Demo (sane settings)
-# Runs in Docker on the Pro 7. Fronts three hardware rungs.
-# Autocomplete now routed through the router (experiment).
+# LiteLLM router config — AI Stack Demo
+# Runs in Docker on the Pro 7 and fronts three hardware tiers.
+#
+# Alias convention:
+#   <tier>-<role>-<model>
+#
+# Runtime requirements:
+#   - GB10 Ollama must be configured for at least 65536 context.
+#   - Blackwell Ollama must be configured for at least 8192 context.
+#   - Foundry remains non-streaming upstream; LiteLLM fake-streams it.
 # ============================================================
 
 model_list:
-  - model_name: Foundry_npu
+  # ---- NPU: fast local coding tier ----
+  - model_name: npu-act-qwen25-coder-1p5b
     litellm_params:
-      model: openai/qwen2.5-coder-1.5b
-      api_base: http://host.docker.internal:56194/v1
+      model: "openai/qwen2.5-coder-1.5b"
+      api_base: "http://host.docker.internal:56194/v1"
       api_key: not-needed
+      max_tokens: 2048
     model_info:
       supports_function_calling: true
-      supports_native_streaming: false     # <-- forces fake-streaming; non-streaming upstream, clean stream to client
-  # ---- Chat: Pro Max Blackwell (Ollama over Tailscale) ----
-  - model_name: Blackwell_chat
+      supports_native_streaming: false
+
+  # ---- Blackwell: Act/coding tier ----
+  - model_name: blackwell-act-qwen25-coder-14b
     litellm_params:
-      model: ollama_chat/qwen2.5-coder:14b
+      model: "ollama_chat/qwen2.5-coder:14b"
       api_base: os.environ/BLACKWELL_BASE
       num_ctx: 8192
+      max_tokens: 4096
     model_info:
       supports_function_calling: true
 
-  # ---- Chat: GB10 (Ollama over Tailscale) ----
-  - model_name: GB10_chat
+  # ---- GB10: Act/coding tier ----
+  - model_name: gb10-act-qwen3-coder-next
     litellm_params:
-      model: ollama_chat/qwen3-coder-next:q4_K_M
+      model: "ollama_chat/qwen3-coder-next:q4_K_M"
       api_base: os.environ/GB10_BASE
       num_ctx: 65536
+      max_tokens: 8192
     model_info:
       supports_function_calling: true
 
-  # ---- Planning: GB10 (Cline Plan mode) ----
-  - model_name: GB10_planning
+  # ---- GB10: Plan/reasoning tier ----
+  - model_name: gb10-plan-qwen38-27b
     litellm_params:
-      model: ollama_chat/qwen3.8:latest
+      model: "ollama_chat/qwen3.8:latest"
       api_base: os.environ/GB10_BASE
       num_ctx: 65536
+      max_tokens: 12288
     model_info:
       supports_function_calling: true
 
-  # ---- Autocomplete / FIM: Blackwell Ollama ----
-  # ollama/ (NOT ollama_chat/) = the completion path that preserves `suffix`
-  # for fill-in-the-middle. ollama_chat/ would strip FIM and break autocomplete.
-  - model_name: Blackwell_autocomplete
+  # ---- Blackwell: FIM autocomplete tier ----
+  # ollama/ (not ollama_chat/) preserves the suffix required for FIM.
+  - model_name: blackwell-fim-qwen25-coder-1p5b
     litellm_params:
-      model: ollama/qwen2.5-coder:1.5b-base
+      model: "ollama/qwen2.5-coder:1.5b-base"
       api_base: os.environ/BLACKWELL_BASE
       num_ctx: 8192
+      max_tokens: 256
+    model_info:
+      supports_function_calling: false
 
 litellm_settings:
   drop_params: true
   num_retries: 1
   request_timeout: 900
+
+  # Availability fallbacks.
   fallbacks:
-    - GB10_chat: [Blackwell_chat]
-    - GB10_planning: [GB10_chat, Blackwell_chat]
+    - npu-act-qwen25-coder-1p5b:
+        - blackwell-act-qwen25-coder-14b
+        - gb10-act-qwen3-coder-next
+    - gb10-act-qwen3-coder-next:
+        - blackwell-act-qwen25-coder-14b
+    - gb10-plan-qwen38-27b:
+        - gb10-act-qwen3-coder-next
+
+  # Context-size fallbacks. These are separate from availability fallbacks.
   context_window_fallbacks:
-    - Blackwell_chat: [GB10_chat]
+    - npu-act-qwen25-coder-1p5b:
+        - blackwell-act-qwen25-coder-14b
+        - gb10-act-qwen3-coder-next
+    - blackwell-act-qwen25-coder-14b:
+        - gb10-act-qwen3-coder-next
 
 router_settings:
   routing_strategy: simple-shuffle

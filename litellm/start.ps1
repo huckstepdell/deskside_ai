@@ -4,9 +4,9 @@
     -----------------
     Brings up the LiteLLM router stack with secrets pulled from 1Password,
     waits for the container to be healthy, then smoke-tests the endpoints:
-        Blackwell_chat    -> Pro Max (Ollama, qwen2.5-coder:14b)
-        GB10_chat         -> GB10     (Ollama, qwen3-coder-next)
-        Blackwell_autocomplete -> Pro Max (Ollama, qwen2.5-coder:1.5b-base, FIM)
+        blackwell-act-qwen25-coder-14b   -> Pro Max (Ollama, qwen2.5-coder:14b)
+        gb10-act-qwen3-coder-next        -> GB10     (Ollama, qwen3-coder-next)
+        blackwell-fim-qwen25-coder-1p5b  -> Pro Max (Ollama, qwen2.5-coder:1.5b-base, FIM)
 
     Usage:
         .\start-litellm.ps1                # bring up + smoke test
@@ -101,7 +101,7 @@ Write-Ok "Router is answering on $RouterUrl."
 # --- 5. Smoke-test endpoints --------------------------------------------------
 if (-not $SkipTests) {
     Write-Step "Smoke-testing chat endpoints"
-    $endpoints = @("Blackwell_chat", "GB10_chat", "GB10_planning")
+    $endpoints = @("blackwell-act-qwen25-coder-14b", "gb10-act-qwen3-coder-next", "gb10-plan-qwen38-27b")
     $results = @()
     foreach ($endpoint in $endpoints) {
         $body = @{
@@ -126,9 +126,9 @@ if (-not $SkipTests) {
     }
 
     # --- 5b. FIM autocomplete endpoint (uses /v1/completions with prompt + suffix) ---
-    Write-Step "Smoke-testing FIM autocomplete (Blackwell_autocomplete)"
+    Write-Step "Smoke-testing FIM autocomplete (blackwell-fim-qwen25-coder-1p5b)"
     $fimBody = @{
-        model      = "Blackwell_autocomplete"
+        model      = "blackwell-fim-qwen25-coder-1p5b"
         prompt     = "def reverse_string(s):`n    "
         suffix     = "`n    return result"
         max_tokens = 32
@@ -142,15 +142,15 @@ if (-not $SkipTests) {
         $sw.Stop()
         $fimText = $fimResp.choices[0].text
         if ([string]::IsNullOrWhiteSpace($fimText)) {
-            Write-Warn ("{0,-18} responded EMPTY in {1} ms  -> router may be dropping `suffix`." -f "Blackwell_autocomplete", $sw.ElapsedMilliseconds)
-            $results += [pscustomobject]@{ Endpoint="Blackwell_autocomplete"; Status="EMPTY"; Ms=$sw.ElapsedMilliseconds }
+            Write-Warn ("{0,-18} responded EMPTY in {1} ms  -> router may be dropping `suffix`." -f "blackwell-fim-qwen25-coder-1p5b", $sw.ElapsedMilliseconds)
+            $results += [pscustomobject]@{ Endpoint="blackwell-fim-qwen25-coder-1p5b"; Status="EMPTY"; Ms=$sw.ElapsedMilliseconds }
         } else {
-            Write-Ok ("{0,-18} completed in {1,5} ms  -> {2}" -f "Blackwell_autocomplete", $sw.ElapsedMilliseconds, ($fimText -replace '\s+',' ').Trim())
-            $results += [pscustomobject]@{ Endpoint="Blackwell_autocomplete"; Status="OK"; Ms=$sw.ElapsedMilliseconds }
+            Write-Ok ("{0,-18} completed in {1,5} ms  -> {2}" -f "blackwell-fim-qwen25-coder-1p5b", $sw.ElapsedMilliseconds, ($fimText -replace '\s+',' ').Trim())
+            $results += [pscustomobject]@{ Endpoint="blackwell-fim-qwen25-coder-1p5b"; Status="OK"; Ms=$sw.ElapsedMilliseconds }
         }
     } catch {
-        Write-Warn ("{0,-18} FAILED: {1}" -f "Blackwell_autocomplete", $_.Exception.Message)
-        $results += [pscustomobject]@{ Endpoint="Blackwell_autocomplete"; Status="FAIL"; Ms=$null }
+        Write-Warn ("{0,-18} FAILED: {1}" -f "blackwell-fim-qwen25-coder-1p5b", $_.Exception.Message)
+        $results += [pscustomobject]@{ Endpoint="blackwell-fim-qwen25-coder-1p5b"; Status="FAIL"; Ms=$null }
     }
 
     Write-Step "Summary"
@@ -159,7 +159,7 @@ if (-not $SkipTests) {
     if ($results.Where({$_.Status -in @("FAIL","EMPTY")}).Count -gt 0) {
         Write-Warn "One or more endpoints failed. Reminders:"
         Write-Warn "  - Blackwell/GB10 chat -> check Tailscale is up + Ollama bound to 0.0.0.0:11435 on that host."
-        Write-Warn "  - Blackwell_autocomplete -> 404/EMPTY means router drops FIM; use direct-to-Blackwell in Continue."
+        Write-Warn "  - blackwell-fim-qwen25-coder-1p5b -> 404/EMPTY means router drops FIM; use direct-to-Blackwell in Continue."
     } else {
         Write-Ok "All endpoints responded (chat + FIM). Stack is live end to end."
     }
