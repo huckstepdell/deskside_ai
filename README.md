@@ -1,6 +1,6 @@
 # DeskSide AI
 
-DeskSide AI is a modular AI stack that combines **Foundry Local**, **LiteLLM**, **Ollama**, and **Open WebUI** to provide a flexible, local-first AI development environment.
+DeskSide AI is a modular AI stack that combines **Foundry Local**, **Tailscale Aperture**, **Ollama**, and **Open WebUI** to provide a flexible, local-first AI development environment.
 
 ## Repository Structure
 
@@ -12,7 +12,7 @@ foundry-local_open-webui/
     install.ps1
     start.ps1
     stop.ps1
-litellm/
+deprecated-litellm/
     docker/
         config.yaml
         docker-compose.yml
@@ -42,10 +42,10 @@ model_lists/
 
 ## Components
 
-- **Foundry Local** – Local NPU model hosting (qwen2.5-coder-1.5b).  Started via `foundry-local_open-webui/start.ps1`.
-- **LiteLLM** – Router that exposes multiple model tiers (Blackwell, GB10, planning, autocomplete).  Configured in `litellm/docker/config.yaml`.
-- **Ollama** – Dockerized LLM runtime for GB10 and Blackwell.  **Must be running on the GB10 and Blackwell workstations** to serve the models.
-- **Open WebUI** – Web UI for interacting with the models.  Started via `foundry-local_open-webui/start.ps1`.
+- **Foundry Local** – Local NPU model hosting (qwen2.5-coder-1.5b). Started via `foundry-local_open-webui/start.ps1`.
+- **Tailscale Aperture** – Routing layer that exposes multiple model tiers (Blackwell, GB10, planning, autocomplete) using service discovery and secure tunnels.
+- **Ollama** – Dockerized LLM runtime for GB10 and Blackwell. **Must be running on the GB10 and Blackwell workstations** to serve the models.
+- **Open WebUI** – Web UI for interacting with the models. Started via `foundry-local_open-webui/start.ps1`.
 - **npmplus** – Node‑based utilities (not detailed here).
 - **ollama** – Additional Docker Compose files for different model setups.
 - **model_lists** – Text files listing available models for each tier.
@@ -58,17 +58,17 @@ model_lists/
    - Foundry Local (via `foundry-local_open-webui/install.ps1`)
 
 2. **Configure secrets**
-   - Create a `.env` file in `foundry-local_open-webui` and `litellm/docker` with the 1Password references.
+   - Create a `.env` file in `foundry-local_open-webui` and `deprecated-litellm/docker` with the 1Password references.
 
-3. **Start the stack**
+4. **Start the stack**
    ```powershell
    cd c:\Users\colin\repos\deskside_ai\foundry-local_open-webui
    .\start.ps1
    ```
 
-4. **Interact**
+5. **Interact**
    - Open WebUI: `http://localhost:8080`
-   - LiteLLM API: `http://localhost:4000/v1`
+   - API endpoints: Accessible via Tailscale Aperture service discovery
 
 ## Smoke Tests
 
