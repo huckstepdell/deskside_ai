@@ -4,6 +4,7 @@ import os
 import signal
 import threading
 import time
+import traceback
 import uuid
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -20,7 +21,7 @@ HOST = os.getenv("OPENVINO_SERVER_HOST", "127.0.0.1")
 PORT = int(os.getenv("OPENVINO_SERVER_PORT", "4001"))
 PID_FILE = ROOT / "server.pid"
 MAX_BODY_BYTES = 10 * 1024 * 1024
-
+MAX_PROMPT_LEN = int(os.getenv("OPENVINO_MAX_PROMPT_LEN", "2048"))
 
 @dataclass(frozen=True)
 class ModelSpec:
@@ -40,7 +41,6 @@ class ModelSpec:
 
         return MODELS_ROOT / path
 
-
 class ModelRuntime:
     def __init__(self, spec: ModelSpec):
         self.spec = spec
@@ -57,10 +57,22 @@ class ModelRuntime:
             flush=True,
         )
 
-        self.pipeline = ov_genai.LLMPipeline(
-            str(self.spec.model_path),
-            self.spec.device,
-        )
+        pipeline_properties: dict[str, Any] = {}
+
+        if self.spec.device == "NPU":
+            pipeline_properties["MAX_PROMPT_LEN"] = MAX_PROMPT_LEN
+
+        if pipeline_properties:
+            self.pipeline = ov_genai.LLMPipeline(
+                str(self.spec.model_path),
+                self.spec.device,
+                pipeline_properties,
+            )
+        else:
+            self.pipeline = ov_genai.LLMPipeline(
+                str(self.spec.model_path),
+                self.spec.device,
+            )
 
         print(
             f"Loaded {self.spec.name} successfully.",
@@ -97,7 +109,6 @@ class ModelRuntime:
                 )
 
         return str(result)
-
 
 def load_model_specs() -> list[ModelSpec]:
     if not MODELS_FILE.exists():
@@ -162,7 +173,6 @@ def load_model_specs() -> list[ModelSpec]:
 
     return specs
 
-
 def load_runtimes() -> dict[str, ModelRuntime]:
     specs = load_model_specs()
     runtimes: dict[str, ModelRuntime] = {}
@@ -188,7 +198,6 @@ def load_runtimes() -> dict[str, ModelRuntime]:
 
     return runtimes
 
-
 RUNTIMES = load_runtimes()
 
 MODEL_BY_NAME: dict[str, ModelRuntime] = {}
@@ -203,7 +212,6 @@ for runtime in RUNTIMES.values():
         )
 
     MODEL_BY_NAME[model_key] = runtime
-
 
 def select_runtime(
     requested_model: str | None,
@@ -229,7 +237,6 @@ def select_runtime(
 
     return runtime
 
-
 def normalize_message_content(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -247,7 +254,6 @@ def normalize_message_content(content: Any) -> str:
         return "".join(parts)
 
     return str(content)
-
 
 def build_chat_prompt(
     messages: list[dict[str, Any]],
@@ -273,24 +279,31 @@ def build_chat_prompt(
 
     return "".join(prompt_parts)
 
-
 def get_generation_parameters(
     payload: dict[str, Any],
 ) -> tuple[int, float, float]:
-    max_tokens = payload.get(
-        "max_tokens",
-        payload.get("max_new_tokens", 256),
-    )
+    max_tokens = payload.get("max_tokens")
 
-    temperature = payload.get("temperature", 0.2)
-    top_p = payload.get("top_p", 1.0)
+    if max_tokens is None:
+        max_tokens = payload.get("max_new_tokens")
+
+    if max_tokens is None:
+        max_tokens = 256
+
+    temperature = payload.get("temperature")
+    top_p = payload.get("top_p")
+
+    if temperature is None:
+        temperature = 0.2
+
+    if top_p is None:
+        top_p = 1.0
 
     return (
         int(max_tokens),
         float(temperature),
         float(top_p),
     )
-
 
 def make_chat_response(
     model_name: str,
@@ -318,7 +331,6 @@ def make_chat_response(
         },
     }
 
-
 def make_completion_response(
     model_name: str,
     output: str,
@@ -342,7 +354,6 @@ def make_completion_response(
         },
     }
 
-
 def pid_is_running(pid: int) -> bool:
     if pid <= 0:
         return False
@@ -357,7 +368,6 @@ def pid_is_running(pid: int) -> bool:
         return False
 
     return True
-
 
 def write_pid_file() -> None:
     PID_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -397,7 +407,6 @@ def write_pid_file() -> None:
         flush=True,
     )
 
-
 def remove_pid_file() -> None:
     try:
         if not PID_FILE.exists():
@@ -419,7 +428,6 @@ def remove_pid_file() -> None:
             flush=True,
         )
 
-
 def handle_shutdown_signal(
     signum: int,
     _frame: Any,
@@ -430,9 +438,7 @@ def handle_shutdown_signal(
     )
     raise KeyboardInterrupt
 
-
 atexit.register(remove_pid_file)
-
 
 class OpenAIHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -470,6 +476,20 @@ class OpenAIHandler(BaseHTTPRequestHandler):
         )
         self.end_headers()
         self.wfile.write(body)
+
+    def send_stream_event(
+        self,
+        payload: dict[str, Any] | str,
+    ) -> None:
+        if isinstance(payload, str):
+            data = payload
+        else:
+            data = json.dumps(payload, ensure_ascii=False)
+
+        self.wfile.write(
+            f"data: {data}\n\n".encode("utf-8")
+        )
+        self.wfile.flush()
 
     def send_error_json(
         self,
@@ -531,6 +551,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
                     "status": "ok",
                     "pid": os.getpid(),
                     "pid_file": str(PID_FILE),
+                    "max_prompt_len": MAX_PROMPT_LEN,
                     "models": [
                         runtime.spec.name
                         for runtime in MODEL_BY_NAME.values()
@@ -592,6 +613,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
                 f"Request failed: {exc}",
                 flush=True,
             )
+            traceback.print_exc()
 
             self.send_error_json(
                 "Internal server error.",
@@ -602,10 +624,7 @@ class OpenAIHandler(BaseHTTPRequestHandler):
         self,
         payload: dict[str, Any],
     ) -> None:
-        if payload.get("stream", False):
-            raise ValueError(
-                "Streaming is not implemented yet."
-            )
+        streaming = bool(payload.get("stream", False))
 
         runtime = select_runtime(
             payload.get("model"),
@@ -637,21 +656,99 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             top_p,
         )
 
-        self.send_json(
-            make_chat_response(
+        if streaming:
+            self.send_chat_stream(
                 runtime.spec.name,
                 output,
             )
+        else:
+            self.send_json(
+                make_chat_response(
+                    runtime.spec.name,
+                    output,
+                )
+            )
+
+    def send_chat_stream(
+        self,
+        model_name: str,
+        output: str,
+    ) -> None:
+        response_id = f"chatcmpl-{uuid.uuid4().hex}"
+        created = int(time.time())
+
+        self.send_response(200)
+        self.send_header(
+            "Content-Type",
+            "text/event-stream; charset=utf-8",
         )
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
+        self.send_header(
+            "Access-Control-Allow-Origin",
+            "*",
+        )
+        self.end_headers()
+        self.close_connection = True
+
+        try:
+            self.send_stream_event(
+                {
+                    "id": response_id,
+                    "object": "chat.completion.chunk",
+                    "created": created,
+                    "model": model_name,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"role": "assistant"},
+                            "finish_reason": None,
+                        }
+                    ],
+                }
+            )
+
+            if output:
+                self.send_stream_event(
+                    {
+                        "id": response_id,
+                        "object": "chat.completion.chunk",
+                        "created": created,
+                        "model": model_name,
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {"content": output},
+                                "finish_reason": None,
+                            }
+                        ],
+                    }
+                )
+
+            self.send_stream_event(
+                {
+                    "id": response_id,
+                    "object": "chat.completion.chunk",
+                    "created": created,
+                    "model": model_name,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                }
+            )
+            self.send_stream_event("[DONE]")
+        except BrokenPipeError:
+            pass
 
     def handle_text_completion(
         self,
         payload: dict[str, Any],
     ) -> None:
-        if payload.get("stream", False):
-            raise ValueError(
-                "Streaming is not implemented yet."
-            )
+        streaming = bool(payload.get("stream", False))
 
         runtime = select_runtime(
             payload.get("model"),
@@ -684,12 +781,77 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             top_p,
         )
 
-        self.send_json(
-            make_completion_response(
+        if streaming:
+            self.send_completion_stream(
                 runtime.spec.name,
                 output,
             )
+        else:
+            self.send_json(
+                make_completion_response(
+                    runtime.spec.name,
+                    output,
+                )
+            )
+
+    def send_completion_stream(
+        self,
+        model_name: str,
+        output: str,
+    ) -> None:
+        response_id = f"cmpl-{uuid.uuid4().hex}"
+        created = int(time.time())
+
+        self.send_response(200)
+        self.send_header(
+            "Content-Type",
+            "text/event-stream; charset=utf-8",
         )
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
+        self.send_header(
+            "Access-Control-Allow-Origin",
+            "*",
+        )
+        self.end_headers()
+        self.close_connection = True
+
+        try:
+            if output:
+                self.send_stream_event(
+                    {
+                        "id": response_id,
+                        "object": "text_completion.chunk",
+                        "created": created,
+                        "model": model_name,
+                        "choices": [
+                            {
+                                "index": 0,
+                                "text": output,
+                                "finish_reason": None,
+                            }
+                        ],
+                    }
+                )
+
+            self.send_stream_event(
+                {
+                    "id": response_id,
+                    "object": "text_completion.chunk",
+                    "created": created,
+                    "model": model_name,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "text": "",
+                            "finish_reason": "stop",
+                        }
+                    ],
+                }
+            )
+            self.send_stream_event("[DONE]")
+        except BrokenPipeError:
+            pass
 
     def log_message(
         self,
@@ -701,7 +863,6 @@ class OpenAIHandler(BaseHTTPRequestHandler):
             f"{format_string % args}",
             flush=True,
         )
-
 
 def main() -> None:
     server = ThreadingHTTPServer(
@@ -735,7 +896,6 @@ def main() -> None:
     finally:
         server.server_close()
         remove_pid_file()
-
 
 if __name__ == "__main__":
     main()

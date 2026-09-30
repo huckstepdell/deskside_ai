@@ -22,7 +22,15 @@ $modelsRoot = Join-Path $scriptRoot 'models'
 $serverScript = Join-Path $scriptRoot 'server.py'
 $serverPidFile = Join-Path $scriptRoot 'server.pid'
 
-$serverHost = '127.0.0.1'
+# Bind to the Tailscale interface so only that network (not all interfaces) can reach the server.
+$tailscaleIp = (& tailscale ip -4 2>$null | Select-Object -First 1)
+
+if ([string]::IsNullOrWhiteSpace($tailscaleIp)) {
+    throw "Unable to resolve a Tailscale IPv4 address. Ensure Tailscale is installed and connected."
+}
+
+$serverBindHost = $tailscaleIp.Trim()
+$serverHost = $serverBindHost
 $serverPort = 4001
 $serverBaseUrl = "http://${serverHost}:${serverPort}"
 
@@ -84,7 +92,7 @@ if (-not (Test-Path -LiteralPath $optimumCli -PathType Leaf)) {
 
 Write-Host "Using venv: $venvPath" -ForegroundColor Cyan
 Write-Host "Models directory: $modelsRoot" -ForegroundColor Cyan
-Write-Host "Server endpoint: $serverBaseUrl" -ForegroundColor Cyan
+Write-Host "Server endpoint: $serverBaseUrl (listening on ${serverBindHost}:${serverPort})" -ForegroundColor Cyan
 Write-Host "PID file: $serverPidFile" -ForegroundColor Cyan
 
 # ---------------------------------------------------------------------------
@@ -606,7 +614,7 @@ function Start-OpenVINOServer {
     $previousServerHost = $env:OPENVINO_SERVER_HOST
     $previousServerPort = $env:OPENVINO_SERVER_PORT
 
-    $env:OPENVINO_SERVER_HOST = $serverHost
+    $env:OPENVINO_SERVER_HOST = $serverBindHost
     $env:OPENVINO_SERVER_PORT = "$serverPort"
 
     try {
