@@ -1,0 +1,72 @@
+{
+  "version": "0.4.2",
+  "exportDate": "2026-09-30T22:19:05.832Z",
+  "baseUrl": "",
+  "apiKey": "",
+  "delay": 0,
+  "retry": {
+    "enabled": false,
+    "max_attempts": 3,
+    "interval_ms": 1000,
+    "status_codes": []
+  },
+  "commitLanguage": "English",
+  "commitModel": "npu-chat-qwen25-coder-0p5b-instruct::npu-instruct",
+  "models": [
+    {
+      "id": "qwen2.5-coder:14b",
+      "owned_by": "Aperture",
+      "displayName": "Blackwell coding",
+      "configId": "blackwell-act",
+      "baseUrl": "http://aperture/v1",
+      "context_length": 8192,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 4096
+    },
+    {
+      "id": "qwen3-coder-next:q4_K_M",
+      "owned_by": "Aperture",
+      "displayName": "GB10 coding",
+      "configId": "gb10-act",
+      "baseUrl": "http://aperture/v1",
+      "context_length": 65536,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 8192
+    },
+    {
+      "id": "qwen3.8:latest",
+      "owned_by": "Aperture",
+      "displayName": "GB10 planning",
+      "configId": "gb10-plan",
+      "baseUrl": "http://aperture/v1",
+      "context_length": 65536,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 12288
+    },
+    {
+      "id": "npu-chat-qwen25-coder-0p5b-instruct",
+      "owned_by": "Aperture",
+      "displayName": "NPU chat/agent",
+      "configId": "npu-instruct",
+      "baseUrl": "http://aperture/v1",
+      "context_length": 8192,
+      "apiMode": "openai",
+      "temperature": 0.2,
+      "max_completion_tokens": 2048,
+      "useForCommitGeneration": true
+    },
+    {
+      "id": "__provider__Aperture",
+      "owned_by": "Aperture",
+      "baseUrl": "http://aperture/v1",
+      "apiMode": "openai"
+    }
+  ],
+  "readFileLines": 0,
+  "providerKeys": {
+    "Aperture": "not-needed"
+  }
+}
