@@ -7,8 +7,7 @@ models:
   - name: NPU FIM Autocomplete
     provider: openai
     model: npu-fim-qwen25-coder-0p5b
-    apiBase: http://localhost:4000/v1
-    apiKey: << Your LiteLLM Virtual or Master Key >>
+    apiBase: http://localhost:4001/v1
     useLegacyCompletionsEndpoint: true
     roles:
       - autocomplete
@@ -19,9 +18,8 @@ models:
 
   - name: NPU Instruct
     provider: openai
-    model: npu-act-qwen25-coder-0p5b-instruct
-    apiBase: http://localhost:4000/v1
-    apiKey: << Your LiteLLM Virtual or Master Key >>
+    model: npu-chat-qwen25-coder-0p5b-instruct
+    apiBase: http://aperture/v1
     roles:
       - chat
       - edit
@@ -33,9 +31,9 @@ models:
   # GB10 models
   - name: GB10 Coder
     provider: openai
-    model: gb10-act-qwen3-coder-next
-    apiBase: http://localhost:4000/v1
-    apiKey: << Your LiteLLM Virtual or Master Key >>
+    model: qwen3-coder-next:q4_K_M
+    apiBase: http://aperture/v1
+
     roles:
       - chat
       - edit
@@ -46,9 +44,9 @@ models:
 
   - name: GB10 Planning
     provider: openai
-    model: gb10-plan-qwen38-27b
-    apiBase: http://localhost:4000/v1
-    apiKey: << Your LiteLLM Virtual or Master Key >>
+    model: qwen3.8:latest
+    apiBase: http://aperture/v1
+
     roles:
       - chat
     defaultCompletionOptions:
@@ -58,9 +56,9 @@ models:
   # Blackwell models
   - name: Blackwell Coder
     provider: openai
-    model: blackwell-act-qwen25-coder-14b
-    apiBase: http://localhost:4000/v1
-    apiKey: << Your LiteLLM Virtual or Master Key >>
+    model: qwen2.5-coder:14b
+    apiBase: http://aperture/v1
+
     roles:
       - chat
       - edit
@@ -70,14 +68,14 @@ models:
       maxTokens: 4096
 
   - name: Blackwell FIM Autocomplete
-    provider: openai
-    model: blackwell-fim-qwen25-coder-1p5b
-    apiBase: http://localhost:4000/v1
-    apiKey: << Your LiteLLM Virtual or Master Key >>
-    useLegacyCompletionsEndpoint: true
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    apiBase: http://pro-max-plus:11435
     roles:
       - autocomplete
     autocompleteOptions:
       debounceDelay: 200
       maxPromptTokens: 1024
       onlyMyCode: true
+
+
