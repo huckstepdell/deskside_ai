@@ -7,7 +7,7 @@ models:
   - name: NPU FIM Autocomplete
     provider: openai
     model: npu-fim-qwen25-coder-0p5b
-    apiBase: http://localhost:4001/v1
+    apiBase: http://pro7:4001/v1
     useLegacyCompletionsEndpoint: true
     roles:
       - autocomplete
