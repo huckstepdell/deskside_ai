@@ -1,0 +1,139 @@
+[
+  {
+    "name": "Aperture (Tailscale)",
+    "vendor": "customendpoint",
+    "apiType": "chat-completions",
+    "models": [
+      {
+        "id": "gb10/gemma4:26b-a4b-it-qat",
+        "name": "Chat - GB10 Gemma 4 26B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 57344,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "blackwell4000/gemma4:12b",
+        "name": "Chat - Blackwell 4K Gemma 4 12B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 26624,
+        "maxOutputTokens": 6144,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "rtx4070/gemma4:12b",
+        "name": "Chat - RTX 4070 Gemma 4 12B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 12288,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "gb10/nemotron-3.5-lightning:30b",
+        "name": "Chat - GB10 Nemotron 3.5 Lightning",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 49152,
+        "maxOutputTokens": 16384,
+        "vision": false,
+        "toolCalling": true
+      },
+      {
+        "id": "gb10/nemotron-3.5-bolt:latest",
+        "name": "Chat - GB10 Nemotron 3.5 Bolt",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 49152,
+        "maxOutputTokens": 16384,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "gb10/gemma4:e4b",
+        "name": "Fast - GB10 Gemma 4 E4B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 57344,
+        "maxOutputTokens": 8192,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "blackwell4000/mimo-v2.6:9b",
+        "name": "Code - Blackwell 4K MiMo V2.6 9B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 20480,
+        "maxOutputTokens": 12288,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "blackwell4000/qwen3.5:9b",
+        "name": "Reasoning - Blackwell 4K Qwen 3.5 9B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 20480,
+        "maxOutputTokens": 12288,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "blackwell4000/mimo-v2.6:9b-q8_0",
+        "name": "Code - Blackwell 4K MiMo V2.6 9B Q8",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 20480,
+        "maxOutputTokens": 12288,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "rtx4070/gemma4:e4b",
+        "name": "Fast - RTX 4070 Gemma 4 E4B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 12288,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "rtx4070/qwen3.5:4b",
+        "name": "Reasoning - RTX 4070 Qwen 3.5 4B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 10240,
+        "maxOutputTokens": 6144,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "rtx4070/qwen3.5:2b",
+        "name": "Fast - RTX 4070 Qwen 3.5 2B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 8192,
+        "maxOutputTokens": 4096,
+        "vision": true,
+        "toolCalling": true
+      },
+      {
+        "id": "rtx4070/lfm3:1.7b",
+        "name": "Fast - RTX 4070 LFM3 1.7B",
+        "url": "http://aperture/v1/chat/completions",
+        "apiType": "chat-completions",
+        "maxInputTokens": 8192,
+        "maxOutputTokens": 4096,
+        "vision": false,
+        "toolCalling": true
+      }
+    ]
+  }
+]
