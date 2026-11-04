@@ -1,0 +1,40 @@
+{
+  "id": "usecase-contracts",
+  "nav": "Legal & Finance",
+  "order": 3,
+  "title": "Contract & document review",
+  "tagline": "Ask plain-English questions of contracts, policies, and reports — and get answers with the exact passages they came from. The document is never uploaded anywhere.",
+  "scenario": "Legal gets a 40-page vendor agreement an hour before the call. Instead of skimming, they drop the PDF on this machine and ask: what are the payment terms, when can we terminate, what are we on the hook for? Every answer shows its supporting passages — trust, but verify.",
+  "steps": [
+    "The button below opens Docs Q&A with a question ready to ask.",
+    "Better: bring <b>their</b> PDF — upload it and let them ask the questions.",
+    "Expand “show the passages” to prove the answer is grounded in the document."
+  ],
+  "ctas": [
+    {
+      "label": "Run it live in Docs Q&A →",
+      "target": "rag",
+      "primary": true,
+      "prompt": "Summarize the key commitments, payment terms, and any deadlines in this document in plain language."
+    }
+  ],
+  "why": [
+    {
+      "head": "Confidentiality",
+      "body": "the one document you can never paste into a cloud chatbot is exactly the one this handles."
+    },
+    {
+      "head": "Cited answers",
+      "body": "every response links back to real passages, not model memory."
+    },
+    {
+      "head": "Any PDF, instantly",
+      "body": "indexing happens on-device in seconds."
+    }
+  ],
+  "playbooks": [],
+  "notes": [
+    "The killer moment is uploading a document the customer brought — ask them beforehand to have a non-sensitive PDF handy.",
+    "Emphasize the passages panel: this is retrieval, not hallucination."
+  ]
+}

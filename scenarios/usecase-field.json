@@ -1,0 +1,40 @@
+{
+  "id": "usecase-field",
+  "nav": "Field Service",
+  "order": 5,
+  "title": "Field service & inspection",
+  "tagline": "A technician photographs equipment and gets an instant assessment — what it is, what looks wrong, what to do next. No connectivity required, so it works in the truck, the plant, or the basement.",
+  "scenario": "A junior tech is in front of a switch cabinet they've never seen. They snap a photo, and the AI identifies the hardware, flags the frayed cable and blocked vents, and suggests the checks a senior tech would run — expertise on tap, on site, offline.",
+  "steps": [
+    "The button below opens Vision with an inspection prompt ready to go.",
+    "Drop in any photo — equipment, a server rack, even a picture from your phone.",
+    "For full effect: turn off Wi-Fi first and show that nothing changes."
+  ],
+  "ctas": [
+    {
+      "label": "Run it live in Vision →",
+      "target": "vision",
+      "primary": true,
+      "prompt": "You are assisting a field service technician. Identify the equipment in this photo, note any visible damage, wear, or safety concerns, and recommend next steps."
+    }
+  ],
+  "why": [
+    {
+      "head": "Works offline",
+      "body": "job sites, secure facilities, and vehicles rarely have reliable uplink."
+    },
+    {
+      "head": "Photos stay local",
+      "body": "site imagery often can't legally leave the premises."
+    },
+    {
+      "head": "Junior techs, senior answers",
+      "body": "institutional knowledge without a phone-a-friend."
+    }
+  ],
+  "playbooks": [],
+  "notes": [
+    "Keep two or three good equipment photos in a folder on the desktop so this demo never depends on finding one live.",
+    "The offline angle lands hardest with manufacturing, utilities, and public-sector audiences."
+  ]
+}

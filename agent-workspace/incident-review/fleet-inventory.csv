@@ -1,0 +1,21 @@
+asset_tag,customer,model,firmware,dock,deployed
+DT-1001,Halvorsen Freight,Latitude 7455,2.3.9,WD25,2025-11-04
+DT-1002,Halvorsen Freight,Latitude 7455,2.4.1,WD25,2025-11-04
+DT-1003,Halvorsen Freight,Latitude 7455,2.4.1,WD25,2025-11-04
+DT-1004,Halvorsen Freight,Latitude 7455,2.4.1,WD19,2025-11-18
+DT-1005,Aldrich Group,Precision 5690,2.4.1,WD25,2026-01-12
+DT-1006,Aldrich Group,Precision 5690,2.4.1,WD25,2026-01-12
+DT-1007,Aldrich Group,Precision 5690,2.3.9,WD25,2026-01-12
+DT-1008,Aldrich Group,Latitude 7455,2.4.1,WD25,2026-01-20
+DT-1009,Cascade Health,Latitude 7455,2.4.0,WD25,2026-02-02
+DT-1010,Cascade Health,Latitude 7455,2.4.1,WD25,2026-02-02
+DT-1011,Cascade Health,Latitude 7455,2.4.1,WD25,2026-02-02
+DT-1012,Cascade Health,Precision 5690,2.4.1,WD19,2026-02-09
+DT-1013,Cascade Health,Latitude 7455,2.3.9,WD19,2026-02-09
+DT-1014,Northbank Credit,OptiPlex 7020,2.4.1,none,2026-02-15
+DT-1015,Northbank Credit,Latitude 7455,2.4.1,WD25,2026-02-15
+DT-1016,Northbank Credit,Latitude 7455,2.4.1,WD25,2026-02-15
+DT-1017,Northbank Credit,Latitude 7455,2.4.0,WD25,2026-02-15
+DT-1018,Vela Robotics,Precision 5690,2.4.1,WD25,2026-03-01
+DT-1019,Vela Robotics,Precision 5690,2.4.1,WD25,2026-03-01
+DT-1020,Vela Robotics,Latitude 7455,2.3.9,WD25,2026-03-01

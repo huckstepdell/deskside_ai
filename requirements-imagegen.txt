@@ -1,0 +1,7 @@
+# Image Studio (SDXL) — optional; ~4GB of CUDA/PyTorch wheels.
+# Installed when setup.sh's Image Studio question is answered Yes.
+--extra-index-url https://download.pytorch.org/whl/cu130
+torch==2.9.0+cu130
+diffusers==0.35.1
+transformers==4.56.1
+accelerate==1.10.1

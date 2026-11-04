@@ -1,0 +1,148 @@
+//
+// Aperture (Tailscale) gateway config for the demo fleet.
+// Paste into the Configuration page (/admin/config); saving validates it.
+// HuJSON: comments and trailing commas are allowed.
+//
+{
+	"auto_cost_basis": false,
+	"providers": {
+		"aperture": {
+			"disabled": true,
+		},
+		"pro7_npu_openvino": {
+			"baseurl": "http://100.64.2.95:4001",
+			"models": [
+				"npu-chat-qwen25-coder-0p5b-instruct",
+			],
+			"authorization": "bearer",
+			"compatibility": {
+				"openai_chat": true,
+			},
+			"apikey":                    "",
+			"auth_mode":                 "none",
+			"name":                      "Pro7 NPU",
+			"openai_output_token_field": "max_completion_tokens",
+		},
+		"blackwell4000_ollama": {
+			"baseurl": "http://100.64.2.98:11435",
+			"models": [
+				"gemma4:12b",
+				"qwen3.5:9b",
+				"gemma4:e4b",
+				"qwen2.5-coder:7b",
+				"qwen2.5-coder:14b",
+			],
+			"authorization": "bearer",
+			"compatibility": {
+				"openai_chat": true,
+			},
+			"name":      "Blackwell 4000",
+			"apikey":    "",
+			"auth_mode": "none",
+		},
+		"rtx4070_ollama": {
+			"baseurl": "http://100.64.2.34:11435",
+			"models": [
+				"gemma4:12b",
+				"qwen3.5:9b",
+				"gemma4:e4b",
+			],
+			"authorization": "bearer",
+			"compatibility": {
+				"openai_chat": true,
+			},
+			"name":      "RTX 4070",
+			"apikey":    "",
+			"auth_mode": "none",
+		},
+		"gb10_ollama": {
+			"baseurl": "http://100.94.55.35:11435",
+			"models": [
+				"gpt-oss:latest",
+				"qwen3.8:latest",
+				"devstral-small-2:24b",
+				"qwen3-coder-next:q4_K_M",
+			],
+			"authorization": "bearer",
+			"compatibility": {
+				"openai_chat": true,
+			},
+			"apikey":    "",
+			"auth_mode": "none",
+			"name":      "GB10",
+		},
+	},
+
+	"chat_models": [
+		{
+			"model":        "gb10_ollama/qwen3-coder-next:q4_K_M",
+			"display_name": "GB10 Qwen 3 Coder Next",
+			"priority":     -20,
+		},
+		{
+			"model":        "gb10_ollama/gpt-oss:latest",
+			"display_name": "GB10 GPT OSS",
+			"priority":     -30,
+		},
+		{
+			"model":        "gb10_ollama/qwen3.8:latest",
+			"display_name": "GB10 Qwen 3.8",
+			"priority":     -40,
+		},
+		{
+			"model":        "blackwell4000_ollama/qwen2.5-coder:14b",
+			"display_name": "Blackwell 4K Chat",
+			"priority":     -50,
+		},
+		{
+			"model":        "blackwell4000_ollama/gemma4:12b",
+			"display_name": "Blackwell 4K Gemma 4 12B",
+			"priority":     -51,
+		},
+		{
+			"model":        "rtx4070_ollama/gemma4:12b",
+			"display_name": "RTX 4070 Gemma 4 12B",
+			"priority":     -55,
+		},
+		{
+			"model":        "rtx4070_ollama/qwen3.5:9b",
+			"display_name": "RTX 4070 Qwen 3.5 9B",
+			"priority":     -56,
+		},
+		{
+			"model":                 "pro7_npu_openvino/npu-chat-qwen25-coder-0p5b-instruct",
+			"display_name":          "Pro 7 NPU Chat",
+			"priority":              -60,
+			"title_gen":             true,
+			"context_window_tokens": 8192,
+			"max_output_tokens":     2048,
+		},
+	],
+
+	"grants": [
+		{
+			// Admins have full access to change all settings and view all data.
+			// Replace "*" with specific users to restrict admin access.
+			"src": [
+				"*",
+			],
+			"app": {
+				"tailscale.com/cap/aperture": [
+					{"role": "admin"},
+				],
+			},
+		},
+
+		// Allow all users access to all models from all providers
+		// (deny by default without this grant).
+		{
+			"src": ["*"],
+			"app": {
+				"tailscale.com/cap/aperture": [
+					{"role": "user", "models": "**"},
+					{"connectors": ["label:system"]},
+				],
+			},
+		},
+	],
+}

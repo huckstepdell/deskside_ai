@@ -1,0 +1,96 @@
+{
+  "_comment": "Curated model metadata and install tiers. This is the editorial layer only — any installed Ollama model appears in the dashboard automatically; entries here add friendly labels, traits, and role/tier membership. Update via scripts/certify (Box Bench + batch sample) rather than vibes.",
+  "catalog": {
+    "qwen3.8:27b": {
+      "label": "Qwen 3.8 · 27B",
+      "blurb": "Newest Qwen — great all-round chat model",
+      "traits": "dense 27B · visible reasoning",
+      "size_gb": 18
+    },
+    "nemotron-3.5-lightning:30b": {
+      "label": "Nemotron 3.5 Lightning",
+      "blurb": "NVIDIA's fast MoE — built for always-on agents",
+      "traits": "MoE 30B · 3B active · reasoning",
+      "size_gb": 25
+    },
+    "nemotron-3.5-bolt:latest": {
+      "label": "Nemotron 3.5 Bolt",
+      "blurb": "NVIDIA's compact agent model — Super, distilled to fit in 24 GB",
+      "traits": "MoE 74B · 9B active · vision · reasoning",
+      "size_gb": 25
+    },
+    "nemotron-3.5-super:latest": {
+      "label": "Nemotron 3.5 Super VL",
+      "blurb": "NVIDIA's flagship open model — sees documents, 1M-token context",
+      "traits": "MoE 120B · 12B active · vision · reasoning · 1M context",
+      "size_gb": 90
+    },
+    "gemma4:26b-a4b-it-qat": {
+      "label": "Gemma 4 · 26B",
+      "blurb": "Google's open model (also sees images)",
+      "traits": "MoE 26B · 4B active · vision · reasoning",
+      "size_gb": 15
+    },
+    "gemma4:e4b": {
+      "label": "Gemma 4 · E4B",
+      "blurb": "Small and instant — runs on phone-class hardware",
+      "traits": "compact 4B-class · vision · audio",
+      "size_gb": 10
+    },
+    "qwen3-coder-next:latest": {
+      "label": "Qwen 3 Coder",
+      "blurb": "Writes and explains code",
+      "traits": "MoE 80B · 3B active · no reasoning",
+      "size_gb": 51
+    },
+    "qwen3.5:122b-a10b": {
+      "label": "Qwen 3.5 · 122B",
+      "blurb": "The big one — 122B parameters on a desktop",
+      "traits": "MoE 122B · 10B active · reasoning",
+      "size_gb": 81
+    },
+    "gemma4:12b": {
+      "label": "Gemma 4 · 12B",
+      "blurb": "Sweet spot for 12–16 GB GPUs — sees images, 256K context",
+      "traits": "dense 12B · vision · reasoning",
+      "size_gb": 8
+    },
+    "qwen3.5:9b": {
+      "label": "Qwen 3.5 · 9B",
+      "blurb": "Compact reasoning model that fits a 12 GB GPU",
+      "traits": "dense 9B · vision · reasoning",
+      "size_gb": 7.6
+    }
+  },
+  "roles": {
+    "workhorse": "nemotron-3.5-lightning:30b",
+    "vision": "gemma4:26b-a4b-it-qat",
+    "fast": "qwen3-coder-next:latest",
+    "reasoner": "qwen3.8:27b",
+    "chat_default": "qwen3.8:27b",
+    "embed": "nomic-embed-text"
+  },
+  "tiers": {
+    "essentials": [
+      "nemotron-3.5-lightning:30b",
+      "nemotron-3.5-bolt:latest",
+      "gemma4:26b-a4b-it-qat",
+      "gemma4:e4b",
+      "nomic-embed-text"
+    ],
+    "full": [
+      "qwen3-coder-next:latest"
+    ],
+    "everything": [
+      "qwen3.5:122b-a10b",
+      "nemotron-3.5-super:latest",
+      "qwen3.8:27b"
+    ],
+    "compact": [
+      "gemma4:12b",
+      "qwen3.5:9b",
+      "gemma4:e4b",
+      "nomic-embed-text"
+    ]
+  }
+}

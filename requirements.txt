@@ -1,0 +1,10 @@
+# GB10 Demo Dashboard
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+httpx==0.28.1
+psutil==7.0.0
+nvidia-ml-py==12.575.51
+python-multipart==0.0.20
+pypdf==5.9.0
+numpy==2.1.0
+reportlab==5.0.0

@@ -1,0 +1,40 @@
+{
+  "id": "usecase-support",
+  "nav": "Customer Support",
+  "order": 4,
+  "title": "Support desk copilot",
+  "tagline": "Give every agent an AI assistant that drafts replies and summarizes long ticket threads — without a single customer name, order number, or complaint ever leaving the building.",
+  "scenario": "An upset customer emails about a damaged delivery. An agent pastes the thread into the assistant and gets a warm, on-brand reply in seconds — apology, replacement offer, next steps. What used to take ten minutes of careful wording takes one.",
+  "steps": [
+    "The button below opens Chat with a real support scenario ready to send.",
+    "Hit <b>Send</b> and watch the reply stream — and the GPU meter climb.",
+    "Follow up conversationally: “make it shorter”, “offer a discount instead”."
+  ],
+  "ctas": [
+    {
+      "label": "Run it live in Chat →",
+      "target": "chat",
+      "primary": true,
+      "prompt": "A customer emailed: 'This is the second time my order arrived damaged. Order #48231, a docking station. I need it for work Monday and I'm honestly fed up.' Draft a short, empathetic reply that apologizes, offers an overnight replacement, and keeps their business."
+    }
+  ],
+  "why": [
+    {
+      "head": "Private by default",
+      "body": "customer PII stays on a machine you own, not in a cloud provider's logs."
+    },
+    {
+      "head": "No per-seat AI fees",
+      "body": "one device serves the whole support team, flat cost."
+    },
+    {
+      "head": "Always on",
+      "body": "no internet outage can take the assistant down mid-shift."
+    }
+  ],
+  "playbooks": [],
+  "notes": [
+    "Point at the telemetry strip while the reply streams — “that's the answer being computed, in this room.”",
+    "If they ask about their own helpdesk: any tool that can call an API can call this box (Ollama speaks the standard OpenAI-style API)."
+  ]
+}

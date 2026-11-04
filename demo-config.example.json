@@ -1,0 +1,6 @@
+{
+  "hosts": {
+    "blackwell": {"label": "Blackwell 4000", "url": "http://pro-max-plus:11435"},
+    "rtx4070":   {"label": "RTX 4070",       "url": "http://aipc:11435"}
+  }
+}

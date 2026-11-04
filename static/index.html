@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dell Pro Max GB10 — AI Demo Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='46' fill='%230672CB'/><text x='50' y='66' font-size='44' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>D</text></svg>">
+<script src="/static/vendor/chart.umd.js"></script>
+<script src="/static/vendor/marked.min.js"></script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">DELL</div>
+    <div class="brand-sub">Pro&nbsp;Max&nbsp;GB10</div>
+  </div>
+  <nav class="nav">
+    <a href="#overview" data-page="overview" class="nav-link">
+      Overview</a>
+    <a href="#chat" data-page="chat" class="nav-link">
+      Chat</a>
+    <a href="#compare" data-page="compare" class="nav-link">
+      Model Comparison</a>
+    <a href="#bench" data-page="bench" class="nav-link">
+      Box Bench</a>
+    <a href="#buildoff" data-page="buildoff" class="nav-link">
+      Build-Off</a>
+    <a href="#vision" data-page="vision" class="nav-link">
+      Vision</a>
+    <a href="#imagegen" data-page="imagegen" class="nav-link">
+      Image Studio</a>
+    <a href="#rag" data-page="rag" class="nav-link">
+      Docs Q&amp;A</a>
+    <a href="#batch" data-page="batch" class="nav-link">
+      Batch Works</a>
+    <a href="#agentworks" data-page="agentworks" class="nav-link">
+      Agent Works</a>
+    <a href="#agent" data-page="agent" class="nav-link" id="agentNavLink" hidden>
+      AI Agent</a>
+    <a href="#runbooks" data-page="runbooks" class="nav-link">
+      Runbooks</a>
+    <div class="nav-sec">Verticals</div>
+    <span id="scenarioNav"></span>
+    <a href="#studio" data-page="studio" class="nav-link nav-sub dim">
+      + New scenario</a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="foot-line">NVIDIA GB10 Grace&nbsp;Blackwell</div>
+    <div class="foot-line dim">100% local · nothing leaves this device</div>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- Persistent live-silicon strip -->
+  <header class="telemetry-strip" id="telemetryStrip">
+    <div class="tile" data-metric="gpu_util">
+      <div class="tile-head"><span class="dot" style="background:var(--c-gpu)"></span>GPU</div>
+      <div class="tile-value"><span id="v-gpu">–</span><span class="unit">%</span></div>
+      <div class="spark-wrap"><canvas class="spark" id="s-gpu" aria-label="GPU utilization sparkline"></canvas></div>
+    </div>
+    <div class="tile" data-metric="mem">
+      <div class="tile-head"><span class="dot" style="background:var(--c-mem)"></span>Unified memory</div>
+      <div class="tile-value"><span id="v-mem">–</span><span class="unit">/ <span id="v-memtotal">128</span> GB</span></div>
+      <div class="spark-wrap"><canvas class="spark" id="s-mem" aria-label="Memory usage sparkline"></canvas></div>
+    </div>
+    <div class="tile" data-metric="power">
+      <div class="tile-head"><span class="dot" style="background:var(--c-pwr)"></span>GPU power</div>
+      <div class="tile-value"><span id="v-pwr">–</span><span class="unit">W</span></div>
+      <div class="spark-wrap"><canvas class="spark" id="s-pwr" aria-label="GPU power sparkline"></canvas></div>
+    </div>
+    <div class="tile" data-metric="temp">
+      <div class="tile-head"><span class="dot" style="background:var(--c-tmp)"></span>GPU temp</div>
+      <div class="tile-value"><span id="v-tmp">–</span><span class="unit">°C</span></div>
+      <div class="spark-wrap"><canvas class="spark" id="s-tmp" aria-label="GPU temperature sparkline"></canvas></div>
+    </div>
+    <div class="tile" data-metric="cpu">
+      <div class="tile-head"><span class="dot" style="background:var(--c-cpu)"></span>CPU (20 cores)</div>
+      <div class="tile-value"><span id="v-cpu">–</span><span class="unit">%</span></div>
+      <div class="spark-wrap"><canvas class="spark" id="s-cpu" aria-label="CPU utilization sparkline"></canvas></div>
+    </div>
+    <div class="tile tile-savings" data-metric="savings" title="Every token this box generates is a cloud API call you didn't pay for (vs. typical frontier-model API rates)">
+      <div class="tile-head"><span class="dot" style="background:var(--dell-blue)"></span>Cloud savings</div>
+      <div class="tile-value"><span id="v-saved">–</span></div>
+      <div class="tile-sub"><span id="v-savedsub">local tokens, counting…</span></div>
+    </div>
+  </header>
+
+  <!-- ============ OVERVIEW ============ -->
+  <section class="page" id="page-overview">
+    <div class="ov-grid">
+    <div class="ov-main">
+      <div class="hero-text">
+        <h1>Dell&nbsp;Pro&nbsp;Max&nbsp;GB10</h1>
+        <p class="hero-tag">A petaFLOP-class AI supercomputer. On a desk. This dashboard — and every AI model behind it — is running <em>on this device</em>, right now. No cloud, no internet required.</p>
+        <div class="spec-grid" id="specGrid"></div>
+      </div>
+
+      <div class="panel mem-panel">
+        <div class="panel-title">Loaded AI models — unified memory
+          <span class="panel-unit">watch models move in and out of the <span id="memTotalLabel">128</span> GB shared pool</span>
+        </div>
+        <div class="membar" id="membar" role="img" aria-label="Unified memory occupancy by model"></div>
+        <div class="mem-legend" id="memLegend"></div>
+      </div>
+
+      <div class="chart-grid">
+      <div class="panel">
+        <div class="panel-title">GPU utilization <span class="panel-unit">%</span></div>
+        <div class="chart-wrap"><canvas id="chart-gpu"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Unified memory in use <span class="panel-unit">GB · shared by CPU &amp; GPU</span></div>
+        <div class="chart-wrap"><canvas id="chart-mem"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">GPU power draw <span class="panel-unit">watts</span></div>
+        <div class="chart-wrap"><canvas id="chart-pwr"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">CPU load per core <span class="panel-unit">20 Arm cores · %</span></div>
+        <div class="chart-wrap"><canvas id="chart-cores"></canvas></div>
+      </div>
+      </div><!-- /chart-grid -->
+    </div><!-- /ov-main -->
+
+    <div class="ov-side">
+      <div class="hero-side">
+        <h3>Demo readiness</h3>
+        <ul class="preflight" id="preflight"><li class="dim">Checking…</li></ul>
+      </div>
+      <div class="panel dock-panel">
+        <div class="panel-title">Model dock
+          <span class="panel-unit">load or unload by hand</span>
+          <button type="button" class="btn dock-btn dock-all" id="dockUnloadAll" hidden>Unload all</button>
+        </div>
+        <div class="dock" id="modelDock"><span class="dim">Checking models…</span></div>
+        <div class="dock-msg" id="dockMsg"></div>
+      </div>
+    </div><!-- /ov-side -->
+    </div><!-- /ov-grid -->
+  </section>
+
+  <!-- ============ CHAT ============ -->
+  <section class="page" id="page-chat" hidden>
+    <div class="page-head">
+      <h2>Chat with a local AI</h2>
+      <p>Every word is generated by the GB10's Blackwell GPU — watch the strip above light up.</p>
+    </div>
+    <div class="model-row" id="modelRow"></div>
+    <div class="chat-thread" id="chatThread">
+      <div class="chat-empty" id="chatEmpty">
+        Pick a model above, then try:
+        <button class="suggestion" data-fill="Explain what makes this GB10 machine special, in three short bullets a business audience would understand.">What makes this machine special?</button>
+        <button class="suggestion" data-fill="Write a friendly two-sentence introduction for a demo of AI running locally on a Dell Pro Max GB10.">Write a demo intro</button>
+        <button class="suggestion" data-fill="Draft a short email to a customer summarizing why running AI on-premises protects their data.">Why on-prem AI?</button>
+      </div>
+    </div>
+    <form class="composer" id="chatForm">
+      <input type="text" id="chatInput" placeholder="Ask anything…" autocomplete="off">
+      <button type="submit" class="btn primary" id="chatSend">Send</button>
+    </form>
+  </section>
+
+  <!-- ============ MODEL COMPARISON ============ -->
+  <section class="page" id="page-compare" hidden>
+    <div class="page-head">
+      <h2>Model Comparison</h2>
+      <p id="arLede">Pick two models — or the same model on two machines — and give them one prompt. Run each on its own and study the details: how long it deliberates, how fast it writes, what the same answer would have cost in the cloud — and choose how each one is loaded: context window, thinking on or off.</p>
+    </div>
+    <div class="aw-tabs ld-modes">
+      <button type="button" class="aw-tab active" id="arModeFree">Free prompt</button>
+      <button type="button" class="aw-tab" id="arModeLadder">Ladder</button>
+    </div>
+    <div id="arFree">
+    <div class="ar-presets" id="arPresets"></div>
+    <form class="composer" id="arForm">
+      <input type="text" id="arPrompt" placeholder="One prompt for both models…" autocomplete="off">
+      <button type="button" class="btn" id="arGoBoth" title="Runs both at once — note they share the GPU's memory bandwidth">Run both</button>
+      <button type="button" class="btn" id="arStop" hidden>Stop</button>
+    </form>
+    <div class="ar-status" id="arStatus"></div>
+    <div class="ar-grid">
+      <div class="panel ar-pane">
+        <div class="ar-pane-head">
+          <select id="arHostA" class="ar-host"></select>
+          <select id="arModelA"></select>
+          <button type="button" class="btn primary" id="arRunA">Run</button>
+        </div>
+        <div class="ar-loadout" id="arLoadoutA">
+          <span class="ar-lo-group" data-help="ctx"><span class="ar-lo-k">Context</span><span class="ar-chips" id="arCtxA"></span></span>
+          <span class="ar-lo-group" id="arThinkGroupA" data-help="think" hidden><span class="ar-lo-k">Thinking</span><span class="ar-chips" id="arThinkA"></span></span>
+          <span class="ar-lo-group" data-help="temp"><span class="ar-lo-k">Temperature</span><span class="ar-chips" id="arTempA"></span></span>
+        </div>
+        <div class="ar-lo-hint" id="arHintA"></div>
+        <div class="ar-traits" id="arTraitsA"></div>
+        <div class="ar-statgrid" id="arStatsA">
+          <div class="ar-stat"><div class="k">First token</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Speed</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Total time</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Reasoning tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Answer tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Cloud cost</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Memory</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Context</div><div class="v">–</div></div>
+        </div>
+        <div class="ar-membar" id="arMemA" hidden>
+          <div class="ar-mb-track"><div class="ar-mb-bar">
+            <div class="ar-mb-w"><span>model</span></div>
+            <div class="ar-mb-r"><div class="ar-mb-used"></div><span>context reserve</span></div>
+          </div></div>
+          <div class="ar-mb-cap"></div>
+        </div>
+        <div class="ar-power">
+          <div class="ar-power-chart"><canvas id="arPowerA"></canvas></div>
+          <div class="ar-power-cap" id="arPowerCapA">power draw appears here during a run</div>
+        </div>
+        <div class="ar-out" id="arOutA">Pick a comparison above, or write your own prompt.</div>
+      </div>
+      <div class="panel ar-pane">
+        <div class="ar-pane-head">
+          <select id="arHostB" class="ar-host"></select>
+          <select id="arModelB"></select>
+          <button type="button" class="btn primary" id="arRunB">Run</button>
+        </div>
+        <div class="ar-loadout" id="arLoadoutB">
+          <span class="ar-lo-group" data-help="ctx"><span class="ar-lo-k">Context</span><span class="ar-chips" id="arCtxB"></span></span>
+          <span class="ar-lo-group" id="arThinkGroupB" data-help="think" hidden><span class="ar-lo-k">Thinking</span><span class="ar-chips" id="arThinkB"></span></span>
+          <span class="ar-lo-group" data-help="temp"><span class="ar-lo-k">Temperature</span><span class="ar-chips" id="arTempB"></span></span>
+        </div>
+        <div class="ar-lo-hint" id="arHintB"></div>
+        <div class="ar-traits" id="arTraitsB"></div>
+        <div class="ar-statgrid" id="arStatsB">
+          <div class="ar-stat"><div class="k">First token</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Speed</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Total time</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Reasoning tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Answer tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Cloud cost</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Memory</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Context</div><div class="v">–</div></div>
+        </div>
+        <div class="ar-membar" id="arMemB" hidden>
+          <div class="ar-mb-track"><div class="ar-mb-bar">
+            <div class="ar-mb-w"><span>model</span></div>
+            <div class="ar-mb-r"><div class="ar-mb-used"></div><span>context reserve</span></div>
+          </div></div>
+          <div class="ar-mb-cap"></div>
+        </div>
+        <div class="ar-power">
+          <div class="ar-power-chart"><canvas id="arPowerB"></canvas></div>
+          <div class="ar-power-cap" id="arPowerCapB">power draw appears here during a run</div>
+        </div>
+        <div class="ar-out" id="arOutB">…</div>
+      </div>
+    </div>
+    </div><!-- /#arFree -->
+
+    <!-- Ladder: the audited pairing climbs four rungs of rising difficulty.
+         One beat fills the stage at a time — idle, prep, rung, finale, error.
+         Three sizes on screen at any moment: one huge line, one supporting
+         line, and dim texture. Everything else lives in the work drawer. -->
+    <div id="ldWrap" hidden>
+      <div class="ld-stage" id="ldStage">
+
+        <!-- beat: idle -->
+        <div class="ld-beat ld-center" id="ldIdle">
+          <div class="ld-kick">Four tasks · hardest last</div>
+          <h3 class="ld-huge">Watch the small one break</h3>
+          <p class="ld-sub" id="ldIdleSub">Two models, one box.</p>
+          <div class="ld-acts">
+            <button type="button" class="btn primary ld-go" id="ldRun" disabled>Run the ladder</button>
+          </div>
+          <div class="ld-note" id="ldNote"></div>
+        </div>
+
+        <!-- beat: prep — 76 GB walking into the pool is a selling moment -->
+        <div class="ld-beat ld-center" id="ldPrep" hidden>
+          <div class="ld-kick" id="ldPrepKick">Getting ready</div>
+          <h3 class="ld-huge" id="ldPrepTitle">Clearing the memory pool</h3>
+          <div class="ld-meter"><div class="ld-meter-fill" id="ldPrepFill"></div></div>
+          <p class="ld-sub" id="ldPrepSub">&nbsp;</p>
+        </div>
+
+        <!-- beat: one rung, filling the stage like a slide -->
+        <div class="ld-beat" id="ldRungBeat" hidden>
+          <div class="ld-head" id="ldRungHead">
+            <div class="ld-kick" id="ldRungN">Rung 1 of 4</div>
+            <h3 class="ld-huge" id="ldRungTitle">&nbsp;</h3>
+            <p class="ld-sub" id="ldRungSub">&nbsp;</p>
+          </div>
+          <div class="ld-panes">
+            <div class="ld-pane" id="ldPaneSmall" data-state="idle">
+              <div class="ld-ph">
+                <div class="ld-ph-id"><b id="ldNameSmall">–</b><span id="ldMetaSmall"></span></div>
+                <div class="ld-liveness" id="ldLiveSmall">
+                  <span class="ld-wave"><i></i><i></i><i></i><i></i><i></i></span>
+                  <b id="ldTimerSmall">0.0s</b><span class="tk" id="ldTokSmall"></span>
+                </div>
+              </div>
+              <div class="ld-texture md-body" id="ldOutSmall"></div>
+              <div class="ld-wait" id="ldWaitSmall">waits its turn</div>
+              <div class="ld-slam" id="ldSlamSmall" hidden></div>
+            </div>
+            <div class="ld-pane" id="ldPaneBig" data-state="idle">
+              <div class="ld-ph">
+                <div class="ld-ph-id"><b id="ldNameBig">–</b><span id="ldMetaBig"></span></div>
+                <div class="ld-liveness" id="ldLiveBig">
+                  <span class="ld-wave"><i></i><i></i><i></i><i></i><i></i></span>
+                  <b id="ldTimerBig">0.0s</b><span class="tk" id="ldTokBig"></span>
+                </div>
+              </div>
+              <div class="ld-texture md-body" id="ldOutBig"></div>
+              <div class="ld-wait" id="ldWaitBig">waits its turn</div>
+              <div class="ld-slam" id="ldSlamBig" hidden></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- beat: finale -->
+        <div class="ld-beat ld-center" id="ldFinale" hidden>
+          <div class="ld-kick">Four rungs · two models · one box</div>
+          <h3 class="ld-huge" id="ldFinPunch">&nbsp;</h3>
+          <p class="ld-sub" id="ldFinPitch">&nbsp;</p>
+          <div class="ld-final" id="ldFinCard"></div>
+          <div class="ld-acts">
+            <button type="button" class="btn" id="ldWorkOpen">See the work ▾</button>
+            <button type="button" class="btn" id="ldAgain">Run it again</button>
+          </div>
+        </div>
+
+        <!-- beat: something went wrong — calm, never a broken half-stage -->
+        <div class="ld-beat ld-center" id="ldErr" hidden>
+          <div class="ld-kick">The climb stopped</div>
+          <h3 class="ld-huge sm" id="ldErrTitle">&nbsp;</h3>
+          <p class="ld-sub" id="ldErrMsg">&nbsp;</p>
+          <div class="ld-acts">
+            <button type="button" class="btn primary" id="ldRetry">Try again</button>
+          </div>
+        </div>
+
+        <!-- persistent score strip -->
+        <div class="ld-strip" id="ldStrip" hidden>
+          <span class="ld-kick">So far</span>
+          <div class="ld-teams" id="ldTeams"></div>
+          <button type="button" class="btn ld-stop" id="ldStop" hidden>Stop</button>
+          <span class="ld-hint" id="ldHint">click a mark to see the work</span>
+        </div>
+      </div>
+
+      <!-- the skeptic's path: everything the stage refuses to show -->
+      <div class="ld-work" id="ldWork" hidden>
+        <div class="ld-work-head">
+          <div class="ld-work-tabs" id="ldWorkTabs"></div>
+          <button type="button" class="btn" id="ldWorkClose">Close</button>
+        </div>
+        <div class="ld-work-body" id="ldWorkBody"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BOX BENCH ============ -->
+  <section class="page" id="page-bench" hidden>
+    <div class="page-head">
+      <h2>Box Bench — accuracy, measured</h2>
+      <p>Speed is easy to see; quality needs receipts. Fourteen tasks with programmatically checkable answers — logic, math, extraction, attention, format compliance — graded by code, not by another AI. Temperature is pinned to zero, so a model earns the same score every run.</p>
+    </div>
+    <div class="bw-toolbar">
+      <select id="bhHost" class="ar-host"></select>
+      <select id="bhModel"></select>
+      <select id="bhReason">
+        <option value="default" selected>Reasoning: model default</option>
+        <option value="off">Reasoning: off</option>
+        <option value="on">Reasoning: on</option>
+      </select>
+      <button class="btn primary" id="bhRun">Run the battery</button>
+      <button class="btn" id="bhStop" hidden>Stop</button>
+    </div>
+    <div class="bw-stats">
+      <div class="panel bw-stat"><div class="k">Score</div><div class="v accent" id="bhScore">–</div></div>
+      <div class="panel bw-stat"><div class="k">Task</div><div class="v" id="bhTask">–</div></div>
+      <div class="panel bw-stat"><div class="k">Elapsed</div><div class="v" id="bhTime">–</div></div>
+      <div class="panel bw-stat"><div class="v small" id="bhStatus">idle</div></div>
+    </div>
+    <div class="bh-grid">
+      <div class="panel">
+        <div class="panel-title">The battery <span class="panel-unit">every prompt visible — nothing up our sleeve</span></div>
+        <div id="bhTasks" class="bh-tasks"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Leaderboard <span class="panel-unit">scores accumulate across runs</span></div>
+        <div id="bhBoard" class="bh-board dim">No runs yet — every completed battery lands here.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BUILD-OFF ============ -->
+  <section class="page" id="page-buildoff" hidden>
+    <div class="page-head">
+      <h2>Build-Off — two models, one build</h2>
+      <p>Give both models the same light brief and watch them work: the reasoning, the code streaming out, the speed and cost — and then the actual result, rendered. Deliberately underspecified, because how a model fills the gaps is the interesting part.</p>
+    </div>
+    <div class="ar-presets" id="boPresets"></div>
+    <form class="composer" id="boForm">
+      <input type="text" id="boPrompt" placeholder="What should they build?" autocomplete="off">
+      <button type="button" class="btn" id="boGoBoth">Build with both</button>
+      <button type="button" class="btn" id="boStop" hidden>Stop</button>
+    </form>
+    <div class="dim" style="font-size:12px;margin:-4px 2px 8px">Appended to every brief: “Respond with ONE complete, self-contained HTML file — all CSS and JS inline, no external resources.”</div>
+    <div class="ar-status" id="boStatus"></div>
+    <div class="ar-grid">
+      <div class="panel ar-pane">
+        <div class="ar-pane-head">
+          <select id="boHostA" class="ar-host"></select>
+          <select id="boModelA"></select>
+          <button type="button" class="btn primary" id="boRunA">Build</button>
+        </div>
+        <div class="ar-traits" id="boTraitsA"></div>
+        <div class="ar-statgrid" id="boStatsA">
+          <div class="ar-stat"><div class="k">First token</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Speed</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Total time</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Reasoning tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Code tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Cloud cost</div><div class="v">–</div></div>
+        </div>
+        <div class="ar-out bo-out" id="boOutA">Pick a brief above, or write your own.</div>
+        <div class="bo-result" id="boResultA" hidden>
+          <div class="bo-result-bar">
+            <span class="dim">Built and rendered locally</span>
+            <button type="button" class="btn" id="boOpenA">Open full size</button>
+          </div>
+          <iframe class="bo-frame" id="boFrameA" sandbox="allow-scripts" title="Model A build result"></iframe>
+        </div>
+      </div>
+      <div class="panel ar-pane">
+        <div class="ar-pane-head">
+          <select id="boHostB" class="ar-host"></select>
+          <select id="boModelB"></select>
+          <button type="button" class="btn primary" id="boRunB">Build</button>
+        </div>
+        <div class="ar-traits" id="boTraitsB"></div>
+        <div class="ar-statgrid" id="boStatsB">
+          <div class="ar-stat"><div class="k">First token</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Speed</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Total time</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Reasoning tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Code tokens</div><div class="v">–</div></div>
+          <div class="ar-stat"><div class="k">Cloud cost</div><div class="v">–</div></div>
+        </div>
+        <div class="ar-out bo-out" id="boOutB">…</div>
+        <div class="bo-result" id="boResultB" hidden>
+          <div class="bo-result-bar">
+            <span class="dim">Built and rendered locally</span>
+            <button type="button" class="btn" id="boOpenB">Open full size</button>
+          </div>
+          <iframe class="bo-frame" id="boFrameB" sandbox="allow-scripts" title="Model B build result"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VISION ============ -->
+  <section class="page" id="page-vision" hidden>
+    <div class="page-head">
+      <h2>Vision — the AI can see</h2>
+      <p>Drop in a photo and a local multimodal model (Gemma&nbsp;4) will describe it or answer questions about it.</p>
+    </div>
+    <div class="vision-grid">
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="visionFile" accept="image/*" hidden>
+        <div class="dz-inner" id="dzInner">
+          
+          <div>Drag a photo here or <button type="button" class="linklike" id="dzBrowse">browse</button></div>
+        </div>
+        <img id="visionPreview" hidden alt="Uploaded preview">
+      </div>
+      <div class="vision-right">
+        <form id="visionForm">
+          <input type="text" id="visionQuestion" placeholder="What should I look for? (default: describe this image)" autocomplete="off">
+          <button type="submit" class="btn primary" id="visionAsk" disabled>Analyze image</button>
+        </form>
+        <div class="answer-card" id="visionAnswer" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ IMAGE STUDIO ============ -->
+  <section class="page" id="page-imagegen" hidden>
+    <div class="page-head">
+      <h2>Image Studio</h2>
+      <p>Stable Diffusion XL, running on the GB10. This is the demo where the GPU meter pins at 100%.</p>
+    </div>
+    <div class="ig-grid">
+      <div class="ig-controls">
+        <label class="field-label" for="igPrompt">Prompt</label>
+        <textarea id="igPrompt" rows="3">A photorealistic modern data center on a coastal cliff at sunset, dramatic lighting</textarea>
+        <label class="field-label" for="igNegative">Avoid (optional)</label>
+        <input type="text" id="igNegative" value="low quality, blurry, text, watermark">
+        <label class="field-label" for="igSteps">Quality steps: <span id="igStepsVal">30</span></label>
+        <input type="range" id="igSteps" min="10" max="50" value="30">
+        <div class="ig-buttons">
+          <button class="btn primary" id="igGenerate">Generate</button>
+          <button class="btn" id="igWarmup" title="Pre-load the model onto the GPU before your call">Warm up</button>
+        </div>
+        <div class="ig-status" id="igStatus"></div>
+        <div class="progress" id="igProgress" hidden><div class="progress-fill" id="igProgressFill"></div></div>
+      </div>
+      <div class="ig-output" id="igOutput">
+        <div class="ig-placeholder" id="igPlaceholder">Your image appears here</div>
+        <img id="igImage" hidden alt="Generated image">
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DOCS Q&A ============ -->
+  <section class="page" id="page-rag" hidden>
+    <div class="page-head">
+      <h2>Chat with your documents</h2>
+      <p>Private RAG: the document is read, indexed and answered <em>entirely on this device</em> — nothing is uploaded anywhere.</p>
+    </div>
+    <div class="rag-toolbar">
+      <select id="ragDocSelect"></select>
+      <label class="btn" for="ragFile">Upload PDF…</label>
+      <input type="file" id="ragFile" accept=".pdf" hidden>
+      <span class="dim" id="ragStatus"></span>
+    </div>
+    <form class="composer" id="ragForm">
+      <input type="text" id="ragQuestion" placeholder="Ask a question about the selected document…" autocomplete="off">
+      <button type="submit" class="btn primary" id="ragAsk">Ask</button>
+    </form>
+    <div class="answer-card" id="ragAnswer" hidden></div>
+    <details class="passages" id="ragPassages" hidden>
+      <summary>Show the passages the answer was built from</summary>
+      <div id="ragPassageList"></div>
+    </details>
+  </section>
+
+  <!-- ============ RUNBOOKS ============ -->
+  <section class="page" id="page-runbooks" hidden>
+    <div class="page-head">
+      <h2>Runbooks — ready to go</h2>
+      <p>NVIDIA's official DGX Spark playbooks, already downloaded on this device. Each one is a guided recipe for a real AI workload.</p>
+    </div>
+    <div class="rb-grid" id="rbGrid"></div>
+    <div class="rb-reader" id="rbReader" hidden>
+      <div class="rb-reader-bar">
+        <button class="btn" id="rbBack">← All runbooks</button>
+        <a class="btn" id="rbExternal" target="_blank" rel="noopener">Open on build.nvidia.com ↗</a>
+      </div>
+      <article class="rb-article" id="rbArticle"></article>
+    </div>
+  </section>
+
+  <!-- ============ BATCH WORKS ============ -->
+  <section class="page" id="page-batch" hidden>
+    <div class="page-head">
+      <h2>Batch Works</h2>
+      <p>Bulk AI jobs — the nightly-batch workload teams pay cloud APIs for, running at desk-side prices. Start a run and watch the savings counter climb.</p>
+    </div>
+    <div class="bw-toolbar">
+      <select id="bwJob"></select>
+      <select id="bwCount">
+        <option value="10">10 items</option>
+        <option value="25" selected>25 items</option>
+        <option value="50">50 items</option>
+        <option value="100">100 items</option>
+        <option value="200">200 items</option>
+      </select>
+      <select id="bwModel"></select>
+      <select id="bwReason">
+        <option value="off" selected>Reasoning off — fast</option>
+        <option value="on">Reasoning on — watch it think</option>
+      </select>
+      <button class="btn primary" id="bwRun">Run batch</button>
+      <button class="btn" id="bwStop" hidden>Stop</button>
+    </div>
+    <div class="bw-stats">
+      <div class="panel bw-stat"><div class="k">Items</div><div class="v" id="bwItems">–</div></div>
+      <div class="panel bw-stat"><div class="k">Tokens this run</div><div class="v" id="bwTokens">–</div></div>
+      <div class="panel bw-stat"><div class="k">Saved this run</div><div class="v accent" id="bwSaved">–</div></div>
+      <div class="panel bw-stat"><div class="k">Status</div><div class="v small" id="bwStatus">idle</div></div>
+    </div>
+    <div class="progress bw-progress" id="bwProgress" hidden><div class="progress-fill" id="bwProgressFill"></div></div>
+    <div class="bw-live">
+      <div class="panel"><div class="panel-title">Current item</div><div class="bw-pre dim" id="bwItem">Pick a job and hit Run — items stream through here.</div></div>
+      <div class="panel"><div class="panel-title">Model output <span class="panel-unit">live</span></div><div class="bw-pre" id="bwOut">—</div></div>
+    </div>
+  </section>
+
+  <!-- ============ AGENT WORKS ============ -->
+  <section class="page" id="page-agentworks" hidden>
+    <div class="page-head">
+      <h2>Agent Works — generative vs agentic</h2>
+      <p>One task, asked three ways. First with nothing but the prompt. Then with every file pasted in. Then handed to an agent that goes and reads them itself. Watch what changes — in the answer, and in the token bill.</p>
+    </div>
+
+    <div class="bw-toolbar">
+      <select id="awTask"></select>
+      <select id="awModel"></select>
+      <button class="btn" id="awRunGen">1 · One-shot</button>
+      <button class="btn" id="awRunStuff">2 · Paste it all in</button>
+      <button class="btn primary" id="awRunAgent">3 · Run the agent</button>
+      <button class="btn" id="awStop" hidden>Stop</button>
+    </div>
+
+    <div class="aw-briefline">
+      <span class="aw-domain" id="awDomain">—</span>
+      <span class="aw-goal" id="awGoal">—</span>
+      <button class="linklike" id="awFilesToggle">show workspace</button>
+    </div>
+    <div class="aw-files" id="awFiles" hidden></div>
+
+    <div class="aw-score">
+      <div class="panel aw-card" id="awCardGen">
+        <div class="aw-card-head">1 · One-shot <span class="aw-card-sub">prompt only</span></div>
+        <div class="aw-metrics">
+          <div><span class="k">Tokens</span><span class="v" id="awGenTokens">–</span></div>
+          <div><span class="k">Cloud cost</span><span class="v accent" id="awGenCost">–</span></div>
+          <div><span class="k">Time</span><span class="v" id="awGenTime">–</span></div>
+        </div>
+        <div class="aw-card-note" id="awGenNote">not run yet</div>
+      </div>
+      <div class="panel aw-card" id="awCardStuff">
+        <div class="aw-card-head">2 · Pasted in <span class="aw-card-sub">one prompt, one pass</span></div>
+        <div class="aw-metrics">
+          <div><span class="k">Tokens</span><span class="v" id="awStTokens">–</span></div>
+          <div><span class="k">Cloud cost</span><span class="v accent" id="awStCost">–</span></div>
+          <div><span class="k">Time</span><span class="v" id="awStTime">–</span></div>
+        </div>
+        <div class="aw-card-note" id="awStNote">not run yet</div>
+      </div>
+      <div class="panel aw-card" id="awCardAgent">
+        <div class="aw-card-head">3 · Agent <span class="aw-card-sub">a loop with tools</span></div>
+        <div class="aw-metrics">
+          <div><span class="k">Tokens</span><span class="v" id="awAgTokens">–</span></div>
+          <div><span class="k">Cloud cost</span><span class="v accent" id="awAgCost">–</span></div>
+          <div><span class="k">Time</span><span class="v" id="awAgTime">–</span></div>
+        </div>
+        <div class="aw-card-note" id="awAgNote">not run yet</div>
+      </div>
+    </div>
+    <div class="aw-versus" id="awVersus" hidden></div>
+
+    <div class="aw-focus">
+      <div class="aw-tabs" id="awTabs">
+        <button class="aw-tab active" data-mode="generative">One-shot</button>
+        <button class="aw-tab" data-mode="stuffed">Pasted in</button>
+        <button class="aw-tab" data-mode="agentic">Agent</button>
+      </div>
+
+      <div class="aw-now" id="awNow">Pick a task above, then work left to right through the three buttons.</div>
+
+      <div class="aw-view" id="awView-generative">
+        <div class="aw-out md-body dim" id="awGenOut">Same model, same question — but with no way to reach the files. It will either ask you to paste them, or answer anyway. Read whatever it produces carefully.</div>
+        <div class="aw-verdict" id="awGenVerdict" hidden></div>
+      </div>
+
+      <div class="aw-view" id="awView-stuffed" hidden>
+        <div class="aw-out md-body dim" id="awStOut">The fair comparison, and the one a customer will ask for: stuff every file into the prompt and ask once. It's fast and it's cheap. Check what it produces against the agent's findings.</div>
+        <div class="aw-verdict" id="awStVerdict" hidden></div>
+      </div>
+
+      <div class="aw-view" id="awView-agentic" hidden>
+        <div class="aw-agentgrid">
+          <div class="aw-sub">
+            <div class="aw-sub-title">The loop <span class="panel-unit" id="awTraceStatus">idle</span></div>
+            <div class="aw-trace" id="awTrace"><div class="dim">Every step: what it called, what came back, and what that step cost.</div></div>
+          </div>
+          <div class="aw-sub">
+            <div class="aw-sub-title">Findings <span class="panel-unit">recorded as it goes</span></div>
+            <div id="awFindings" class="dim">Nothing recorded yet.</div>
+          </div>
+        </div>
+        <div class="aw-sub aw-reportwrap" id="awReportWrap" hidden>
+          <div class="aw-sub-title">The deliverable <span class="panel-unit">written from the findings above</span></div>
+          <div class="aw-out md-body" id="awReport">…</div>
+        </div>
+      </div>
+    </div>
+
+    <details class="panel aw-scale" id="awScaleBox">
+      <summary>What this costs at scale <span class="panel-unit">cloud API rates, this run as the unit</span></summary>
+      <div class="aw-scale-row">
+        <label>Runs per day <input type="range" id="awRuns" min="1" max="200" value="20"><b id="awRunsV">20</b></label>
+        <label>People doing it <input type="range" id="awSeats" min="1" max="500" value="25"><b id="awSeatsV">25</b></label>
+      </div>
+      <div class="aw-scale-out">
+        <div><span class="k">Cloud, per month</span><span class="v" id="awScaleCloud">–</span></div>
+        <div><span class="k">On this box</span><span class="v accent">$0.00</span></div>
+        <div><span class="k">Per year</span><span class="v" id="awScaleYear">–</span></div>
+      </div>
+      <p class="aw-note"><b>Yes, pasting everything in is cheaper.</b> At this size it is — seven files fit in a prompt with room to spare. Two things to notice anyway. It gets <em>one pass</em>: no re-reading, no cross-checking, no arithmetic it can verify, so compare its findings and its total against the agent's before you trust it. And it only works while the data fits — seven expense reports do, seven hundred don't, and neither does a ticket system, a document repository, or a codebase. The agent decides what to read, so it works the same at any size. That's what the token bill buys, and every loop it runs resends the whole conversation, which is why an agentic workload costs what it costs. The more of your work it does, the bigger that bill gets — which is the argument for owning the silicon it runs on.</p>
+      <p class="aw-note">Figures price this run's tokens at $3.00 per million in / $15.00 per million out — mainstream frontier API rates, no prompt-caching discount assumed (caching would trim the input side, not change the curve). The point isn't the exact number; it's the slope.</p>
+    </details>
+  </section>
+
+  <!-- ============ AI AGENT (NemoClaw) ============ -->
+  <section class="page" id="page-agent" hidden>
+    <div class="page-head">
+      <h2>An always-on AI agent, in a sandbox</h2>
+      <p>This box runs NVIDIA NemoClaw — an OpenClaw assistant powered by Nemotron, living inside an OpenShell security sandbox. It remembers, plans, and acts — and none of it ever leaves this device.</p>
+    </div>
+    <div class="uc-grid">
+      <div class="panel uc-story">
+        <div class="panel-title">What makes this different from chat</div>
+        <p>Chat answers questions; an agent <b>does work</b>. It keeps memory across conversations, uses tools, runs scheduled tasks, and can be extended with skills — a personal assistant that's always on because the hardware it lives on is always on. The catch with agents is trust: this one runs inside NVIDIA's OpenShell sandbox, so what it can touch is policy, not luck.</p>
+        <div class="panel-title">Try it live</div>
+        <ol class="uc-steps">
+          <li>Open the agent's own interface and just talk to it.</li>
+          <li>Ask it something with steps: <b>“Plan my demo day: three customer sessions, lunch at noon, and prep time before each.”</b></li>
+          <li>Point at the isolation table — it can reason with full GPU power, but it can only touch what the policy allows.</li>
+        </ol>
+        <div class="uc-ctas">
+          <a class="btn primary uc-cta" id="agentOpen" href="http://127.0.0.1:18789/" target="_blank" rel="noopener">Open the agent →</a>
+        </div>
+        <div class="dim" id="agentStatusLine" style="margin-top:10px">Checking agent status…</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">The sandbox, in plain terms</div>
+        <ul class="uc-points">
+          <li><b>Filesystem</b> — reads and writes only inside its own sandbox paths; your files are invisible to it.</li>
+          <li><b>Network</b> — outbound connections limited to an explicit allowlist; everything else is blocked.</li>
+          <li><b>Process</b> — no privilege escalation, dangerous syscalls blocked.</li>
+          <li><b>Inference</b> — model calls rerouted through a controlled endpoint to the local Nemotron.</li>
+        </ul>
+        <div class="panel-title">NVIDIA playbooks on this box</div>
+        <div class="uc-playbooks">
+          <button class="btn" data-runbook="nemoclaw">Run NemoClaw with a Local LLM</button>
+          <button class="btn" data-runbook="nemoclaw-applications">Example NemoClaw Agents</button>
+          <button class="btn" data-runbook="openclaw">OpenClaw</button>
+        </div>
+      </div>
+    </div>
+    <details class="uc-notes">
+      <summary>Presenter notes</summary>
+      <ul>
+        <li>The agent's brain is the same Nemotron the rest of the demo uses — one model serving chat, batch, casework, and an agent simultaneously is itself the unified-memory story.</li>
+        <li>No channels (Telegram etc.) are connected on this box by design — nothing external can reach it, and it can't reach out.</li>
+        <li>If the agent seems slow to first reply, the model may be cold-loading; the status line below the button shows sandbox health.</li>
+      </ul>
+    </details>
+  </section>
+
+  <!-- ============ CASE WORKS (public-safety workflow) ============ -->
+  <section class="page" id="page-casework" hidden>
+    <div class="page-head">
+      <h2>Case Works — one case, three desks</h2>
+      <p>A fictional burglary follows the real workflow: patrol writes it up, a detective works it, an analyst connects it. Every output is a usable document — drafted by AI on this device, reviewed and signed by a human.</p>
+    </div>
+    <div class="cw-tabs">
+      <button class="cw-tab active" data-stage="report">Patrol — notes to report</button>
+      <button class="cw-tab" data-stage="analysis">Detective — timeline &amp; contradictions</button>
+      <button class="cw-tab" data-stage="patterns">Analyst — connect the cases</button>
+    </div>
+
+    <div class="cw-stage" id="cw-report">
+      <div class="cw-input panel">
+        <div class="panel-title">Officer's field notes <span class="panel-unit">raw, end of shift — edit if you like</span></div>
+        <textarea id="cwNotes" rows="12" spellcheck="false"></textarea>
+        <div class="cw-actions">
+          <button class="btn primary" data-cwrun="report">Draft the incident report →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cw-stage" id="cw-analysis" hidden>
+      <div class="cw-input panel">
+        <div class="panel-title">Case bundle — 26-04187 <span class="panel-unit">what landed on the detective's desk</span></div>
+        <div id="cwBundle" class="cw-sources"></div>
+        <div class="cw-actions">
+          <button class="btn primary" data-cwrun="analysis">Build timeline &amp; flag contradictions →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cw-stage" id="cw-patterns" hidden>
+      <div class="cw-input panel">
+        <div class="panel-title">Last 60 days of incidents <span class="panel-unit">10 open cases, as an analyst sees them</span></div>
+        <div id="cwIncidents" class="cw-sources"></div>
+        <div class="cw-actions">
+          <button class="btn primary" data-cwrun="patterns">Find connected cases →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cw-processing panel" id="cwProcessing" hidden>
+      <span class="cw-spinner">⟳</span>
+      <span id="cwProcStatus">Working…</span>
+      <span class="dim" id="cwProcMeta"></span>
+    </div>
+
+    <div id="cwResultWrap" hidden>
+      <div class="cw-result-bar">
+        <span class="dim" id="cwResultMeta"></span>
+        <button class="btn" id="cwPrint">Print</button>
+      </div>
+      <div id="cwResult"></div>
+    </div>
+  </section>
+
+  <!-- Vertical scenario pages render here from /api/scenarios -->
+  <div id="scenarioPages"></div>
+
+  <!-- ============ DOCUMENT OUTPUT (scenario deliverables) ============ -->
+  <section class="page" id="page-docout" hidden>
+    <div class="page-head">
+      <h2>Document draft</h2>
+      <p>The AI drafts a real deliverable — formatted the way the industry expects it, marked fictional, ready to print. Edit the brief below and regenerate freely.</p>
+    </div>
+    <form class="composer" id="docForm">
+      <input type="text" id="docPrompt" placeholder="What document should it draft?" autocomplete="off">
+      <button type="submit" class="btn primary" id="docGo">Draft it</button>
+    </form>
+    <div class="cw-processing panel" id="docProcessing" hidden>
+      <span class="cw-spinner">⟳</span>
+      <span id="docProcStatus">Drafting…</span>
+      <span class="dim" id="docProcMeta"></span>
+    </div>
+    <div id="docResultWrap" hidden>
+      <div class="cw-result-bar">
+        <span class="dim" id="docResultMeta"></span>
+        <span>
+          <button class="btn" id="docPdf">Download PDF</button>
+          <button class="btn" id="docPrint">Print</button>
+        </span>
+      </div>
+      <div id="docResult"></div>
+    </div>
+  </section>
+
+  <!-- ============ SCENARIO STUDIO ============ -->
+  <section class="page" id="page-studio" hidden>
+    <div class="page-head">
+      <h2>Scenario Studio</h2>
+      <p>Build a vertical demo page for your own customer. Describe the customer, let the local model draft the page, then edit every word before it goes live — the model writes the first draft, you supply the judgment.</p>
+    </div>
+    <div class="uc-grid">
+      <div class="panel">
+        <div class="panel-title">1 · Describe the customer</div>
+        <div class="st-form">
+          <label>Industry / customer type</label>
+          <input type="text" id="stIndustry" placeholder="e.g. county water utility">
+          <label>What their people do all day</label>
+          <textarea id="stWorkflows" rows="2" placeholder="e.g. field inspections, compliance reporting, permit reviews"></textarea>
+          <label>Data sensitivity / constraints (optional)</label>
+          <input type="text" id="stSensitive" placeholder="e.g. infrastructure data can't leave the network">
+          <label>Anything specific from the customer conversation (optional)</label>
+          <textarea id="stExtra" rows="2" placeholder="e.g. they mentioned drowning in inspection backlogs"></textarea>
+          <div class="cw-actions">
+            <button class="btn primary" id="stGenerate">Generate draft</button>
+            <span class="dim" id="stGenStatus"></span>
+          </div>
+        </div>
+        <div class="panel-title" style="margin-top:18px">Manage</div>
+        <div class="st-form">
+          <div class="uc-ctas">
+            <label class="btn" for="stImportFile">Import a scenario…</label>
+            <input type="file" id="stImportFile" accept=".json" hidden>
+            <span class="dim" id="stManageStatus"></span>
+          </div>
+        </div>
+      </div>
+      <div class="panel" id="stEditor" hidden>
+        <div class="panel-title">2 · Edit, then save</div>
+        <div class="st-form">
+          <label>Page title</label><input type="text" id="stTitle">
+          <label>Sidebar label</label><input type="text" id="stNav">
+          <label>Tagline</label><textarea id="stTagline" rows="2"></textarea>
+          <label>The scenario</label><textarea id="stScenario" rows="4"></textarea>
+          <label>Run-it-live steps (one per line)</label><textarea id="stSteps" rows="3"></textarea>
+          <label>Why on this box (one per line, format: Heading — sentence)</label><textarea id="stWhy" rows="3"></textarea>
+          <label>Presenter notes (one per line)</label><textarea id="stNotes" rows="3"></textarea>
+          <div id="stCtas"></div>
+          <div class="cw-actions">
+            <button class="btn primary" id="stSave">Save scenario</button>
+            <button class="btn" id="stGendoc" hidden>Generate sample document</button>
+            <span class="dim" id="stSaveStatus"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

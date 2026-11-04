@@ -1,0 +1,26 @@
+# Dashboard only — no GPU needed. Point it at a compute node over the tailnet.
+#   OLLAMA_URL=http://pro-max-plus:11435 TELEMETRY_URL=http://pro-max-plus:9101 \
+#     docker compose -f compose.ui.yml up -d --build
+# Add more machines as comparison hosts with DEMO_HOSTS (JSON; shape in demo-config.example.json).
+# Dockhand: deploy from Git with this file (build at deploy) and set these variables in the stack environment.
+services:
+  ui:
+    build:
+      context: .
+      args:
+        INSTALL_IMAGEGEN: ${INSTALL_IMAGEGEN:-0}
+    image: ai-demo-ui:latest
+    restart: unless-stopped
+    environment:
+      DEMO_MODE: ui
+      DEMO_PROFILE: ${DEMO_PROFILE:-gb10}
+      OLLAMA_URL: ${OLLAMA_URL:?set OLLAMA_URL to the primary node, e.g. http://gb10:11434}
+      TELEMETRY_URL: ${TELEMETRY_URL:-}
+      PRIMARY_LABEL: ${PRIMARY_LABEL:-}
+      DEVICE_NAME: ${DEVICE_NAME:-}
+      # extra comparison nodes as JSON, e.g. {"rtx4070":{"label":"RTX 4070","url":"http://aipc:11435","telemetry_url":"http://aipc:9101"}}
+      DEMO_HOSTS: ${DEMO_HOSTS:-}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data

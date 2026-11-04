@@ -1,0 +1,68 @@
+{
+  "id": "usecase-safety",
+  "nav": "Public Safety",
+  "order": 2,
+  "title": "Public Safety",
+  "tagline": "Case work with AI — evidence photos described and cross-referenced, case files you can interrogate in plain English — with everything staying inside the evidence room. Air-gapped if needed.",
+  "scenario": "A detective inherits a commercial burglary: photos, an alarm log, witness statements, and a hunch it connects to last month's case across town. The AI pre-reads all of it. The bundled <b>Springfield PD incident report</b> (a clearly fictional training sample) is already indexed — ask it about timelines, evidence, and open leads.",
+  "steps": [
+    "Interrogate the case file — timelines, witnesses, what connects to the Fairview incident.",
+    "Drop any photo into Vision with the evidence prompt and watch it inventory the scene.",
+    "For video evidence at scale, open the VSS playbook — body-cam and CCTV search runs on this hardware."
+  ],
+  "ctas": [
+    {
+      "label": "Run the Case Works demo →",
+      "target": "casework",
+      "primary": true
+    },
+    {
+      "label": "Interrogate the case file →",
+      "target": "rag",
+      "ragdoc": "springfield-pd",
+      "prompt": "Build a timeline of the incident from the alarm log, camera footage, and witness statements. What are the strongest open leads?"
+    },
+    {
+      "label": "Analyze a scene photo →",
+      "target": "vision",
+      "prompt": "Treat this as a training exercise on a staged scene photo: inventory what is visible, note anything out of place or damaged, and list follow-up questions an investigator should ask."
+    },
+    {
+      "label": "View the case file (PDF)",
+      "href": "/docs/springfield-pd-incident-26-04187-SAMPLE.pdf"
+    }
+  ],
+  "why": [
+    {
+      "head": "Evidence never leaves custody",
+      "body": "analysis happens where the evidence lives; chain of custody stays intact."
+    },
+    {
+      "head": "Air-gap capable",
+      "body": "works with zero internet, which is how evidence networks are actually run."
+    },
+    {
+      "head": "Hours to minutes",
+      "body": "a junior officer's week of photo and report review becomes an afternoon of verification."
+    }
+  ],
+  "playbooks": [
+    {
+      "slug": "vss",
+      "label": "Video Search & Summarization"
+    },
+    {
+      "slug": "live-vlm-webui",
+      "label": "Live VLM WebUI"
+    },
+    {
+      "slug": "multi-modal-inference",
+      "label": "Multi-Modal Inference"
+    }
+  ],
+  "notes": [
+    "All demo data is invented (Springfield PD, fictional names) and labeled as such — never demo with real case material.",
+    "The VSS playbook is the headline for agencies drowning in body-cam and CCTV footage: natural-language search over video, on-prem.",
+    "Frame the AI as a triage assistant that drafts and flags for human investigators — not a decision-maker. That framing matters to this audience."
+  ]
+}

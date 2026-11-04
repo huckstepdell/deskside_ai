@@ -1,0 +1,16 @@
+{
+  "_comment": "GB10: 128GB unified memory. No role overrides — uses models.json defaults (Essentials tier).",
+  "pull": [
+    "nemotron-3.5-lightning:30b",
+    "nemotron-3.5-bolt:latest",
+    "gemma4:26b-a4b-it-qat",
+    "gemma4:e4b",
+    "nomic-embed-text"
+  ],
+  "env": {
+    "OLLAMA_MAX_LOADED_MODELS": "4",
+    "OLLAMA_NUM_PARALLEL": "2",
+    "OLLAMA_KEEP_ALIVE": "30m",
+    "OLLAMA_CONTEXT_LENGTH": "16384"
+  }
+}

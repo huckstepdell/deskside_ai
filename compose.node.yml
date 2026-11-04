@@ -1,0 +1,31 @@
+# Dockhand: deploy from Git with this file (build at deploy), set the variables in the stack environment.
+# Compute node: Ollama + metrics agent, no dashboard. Run on each GPU machine.
+#   DEMO_PROFILE=rtx4070 docker compose -f compose.node.yml up -d --build
+# BIND_IP pins the published ports to one address (e.g. the machine's tailnet IP) instead of all interfaces.
+# DEVICE_NAME is what the dashboard shows for this machine; the GB10 can leave it unset.
+services:
+  node:
+    build:
+      context: .
+    image: ai-demo-compute:latest
+    restart: unless-stopped
+    environment:
+      DEMO_MODE: node
+      DEMO_PROFILE: ${DEMO_PROFILE:-gb10}
+      DEMO_PULL: ${DEMO_PULL:-auto}
+      DEVICE_NAME: ${DEVICE_NAME:-}
+    ports:
+      - "${BIND_IP:-0.0.0.0}:11435:11434"   # Ollama
+      - "${BIND_IP:-0.0.0.0}:9101:9101"     # metrics agent
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  ollama:

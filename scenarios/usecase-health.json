@@ -1,0 +1,64 @@
+{
+  "id": "usecase-health",
+  "nav": "Healthcare",
+  "order": 1,
+  "title": "Healthcare",
+  "tagline": "Clinical documentation with AI — discharge summaries, prior-auth letters, policy Q&A — on infrastructure the hospital controls. PHI never leaves the building, so there's no cloud vendor and no BAA in the loop.",
+  "scenario": "A hospitalist spends 90 minutes a day on documentation. The AI drafts the discharge summary from the chart notes and writes the prior-auth letter citing the plan criteria — the clinician reviews and signs. The bundled <b>Springfield General clinical policy</b> (a clearly fictional sample) is already indexed for Q&A.",
+  "steps": [
+    "Ask the policy a question — the answer cites the exact passages it came from.",
+    "Then have Chat draft a prior-auth letter and watch it stream.",
+    "Point at the sidebar: <b>“100% local — nothing leaves this device.”</b> That's the whole pitch."
+  ],
+  "ctas": [
+    {
+      "label": "Ask the clinical policy →",
+      "target": "rag",
+      "primary": true,
+      "ragdoc": "springfield-general",
+      "prompt": "What must a discharge summary include, and what is the deadline for completing it?"
+    },
+    {
+      "label": "Draft a prior-auth letter →",
+      "target": "doc",
+      "prompt": "Draft a prior authorization letter for an MRI of the lumbar spine for a fictional patient with 8 weeks of radicular back pain, failed physical therapy and NSAIDs, and progressive foot weakness. Cite typical plan criteria. Mark it DRAFT — FICTIONAL SAMPLE."
+    },
+    {
+      "label": "View the policy (PDF)",
+      "href": "/docs/springfield-general-clinical-policy-SAMPLE.pdf"
+    }
+  ],
+  "why": [
+    {
+      "head": "PHI stays on-prem",
+      "body": "no business associate agreement, no cloud data-processing addendum, no per-token metering of patient data."
+    },
+    {
+      "head": "Volume economics",
+      "body": "documentation runs all day, every day; flat-cost hardware beats metered tokens at clinical volumes."
+    },
+    {
+      "head": "Works in restricted networks",
+      "body": "clinical VLANs and facilities with no external egress are the norm, not the exception."
+    }
+  ],
+  "playbooks": [
+    {
+      "slug": "station-healthcare-agent",
+      "label": "Local Healthcare Agent"
+    },
+    {
+      "slug": "rag-ai-workbench",
+      "label": "RAG AI Workbench"
+    },
+    {
+      "slug": "single-cell",
+      "label": "Single-Cell Genomics"
+    }
+  ],
+  "notes": [
+    "Stay on documentation and policy work — do not demo reading X-rays or scans with the general vision model; it will answer confidently and wrongly. For imaging, point at the healthcare playbook and NVIDIA's specialized medical-imaging stack instead.",
+    "Everything shown is labeled FICTIONAL SAMPLE — say so out loud before a clinical audience; they will ask.",
+    "The line that lands: “the one dataset you can never paste into a chatbot is the one this box is built for.”"
+  ]
+}

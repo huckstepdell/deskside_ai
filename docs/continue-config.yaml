@@ -1,0 +1,145 @@
+name: Dell Main Models
+version: 0.0.2
+schema: v1
+
+# contextLength matches each server's OLLAMA_CONTEXT_LENGTH (profiles/*.json);
+# maxTokens is kept well under it so the prompt still has room.
+models:
+  # NPU models (8K window, per the Aperture config)
+  - name: NPU FIM Autocomplete
+    provider: openai
+    model: npu-fim-qwen25-coder-0p5b
+    apiBase: http://pro7:4001/v1
+    useLegacyCompletionsEndpoint: true
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 200
+      maxPromptTokens: 1024
+      onlyMyCode: true
+
+  - name: NPU Instruct
+    provider: openai
+    model: npu-chat-qwen25-coder-0p5b-instruct
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 8192
+      temperature: 0.2
+      maxTokens: 2048
+
+  # GB10 models (16K server context)
+  - name: GB10 Coder
+    provider: openai
+    model: qwen3-coder-next:q4_K_M
+    apiBase: http://aperture/v1
+
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
+  - name: GB10 Planning
+    provider: openai
+    model: qwen3.8:latest
+    apiBase: http://aperture/v1
+
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 6144
+
+  # Blackwell models (16K server context)
+  - name: Blackwell Coder
+    provider: openai
+    model: qwen2.5-coder:14b
+    apiBase: http://aperture/v1
+
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
+  - name: Blackwell Gemma 4 12B
+    provider: openai
+    model: blackwell4000_ollama/gemma4:12b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
+  - name: Blackwell Qwen 3.5 Reasoner
+    provider: openai
+    model: blackwell4000_ollama/qwen3.5:9b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 6144
+
+  - name: Blackwell FIM Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    apiBase: http://pro-max-plus:11435
+    roles:
+      - autocomplete
+    autocompleteOptions:
+      debounceDelay: 200
+      maxPromptTokens: 1024
+      onlyMyCode: true
+
+  # RTX 4070 models (16K server context)
+  - name: RTX 4070 Gemma 4 12B
+    provider: openai
+    model: rtx4070_ollama/gemma4:12b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
+  - name: RTX 4070 Qwen 3.5 Reasoner
+    provider: openai
+    model: rtx4070_ollama/qwen3.5:9b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 6144
+
+  - name: RTX 4070 Gemma 4 Fast
+    provider: openai
+    model: rtx4070_ollama/gemma4:e4b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
