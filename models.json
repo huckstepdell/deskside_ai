@@ -60,6 +60,36 @@
       "blurb": "Compact reasoning model that fits a 12 GB GPU",
       "traits": "dense 9B · vision · reasoning",
       "size_gb": 7.6
+    },
+    "qwen3.5:4b": {
+      "label": "Qwen 3.5 · 4B",
+      "blurb": "Small reasoning model — fast on a 12 GB GPU",
+      "traits": "dense 4B · vision · reasoning",
+      "size_gb": 3.4
+    },
+    "qwen3.5:2b": {
+      "label": "Qwen 3.5 · 2B",
+      "blurb": "Tiny and instant — for speed and efficiency demos",
+      "traits": "dense 2B · vision · reasoning",
+      "size_gb": 2.7
+    },
+    "lfm3:1.7b": {
+      "label": "LFM3 · 1.7B",
+      "blurb": "Liquid AI's tiny hybrid model — built for local agents",
+      "traits": "hybrid 1.7B · tools · reasoning",
+      "size_gb": 1.1
+    },
+    "mimo-v2.6:9b": {
+      "label": "MiMo V2.6 · 9B",
+      "blurb": "Xiaomi's code and agent model, distilled from Qwen",
+      "traits": "dense 9B · vision · reasoning · 256K context",
+      "size_gb": 6.6
+    },
+    "mimo-v2.6:9b-q8_0": {
+      "label": "MiMo V2.6 · 9B (Q8)",
+      "blurb": "Same model at higher-fidelity 8-bit quantization",
+      "traits": "dense 9B · Q8 · vision · reasoning",
+      "size_gb": 10
     }
   },
   "roles": {

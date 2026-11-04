@@ -1,21 +1,22 @@
 {
-  "_comment": "16GB Blackwell 4000: 12B/9B-class models fit fully in VRAM with room for context; 26B+ models would spill to system RAM and slow down.",
+  "_comment": "16GB Blackwell 4000: the higher-fidelity node (9B models, a q8 quant). Gemma 4 12B is shared with the RTX 4070 for like-for-like comparisons.",
   "roles": {
     "workhorse": "gemma4:12b",
     "vision": "gemma4:12b",
-    "fast": "gemma4:e4b",
+    "fast": "mimo-v2.6:9b",
     "reasoner": "qwen3.5:9b",
     "chat_default": "gemma4:12b"
   },
   "pull": [
     "gemma4:12b",
     "qwen3.5:9b",
-    "gemma4:e4b",
+    "mimo-v2.6:9b",
+    "mimo-v2.6:9b-q8_0",
     "nomic-embed-text"
   ],
   "env": {
-    "OLLAMA_MAX_LOADED_MODELS": "2",
-    "OLLAMA_NUM_PARALLEL": "2",
+    "OLLAMA_MAX_LOADED_MODELS": "1",
+    "OLLAMA_NUM_PARALLEL": "1",
     "OLLAMA_KEEP_ALIVE": "10m",
     "OLLAMA_CONTEXT_LENGTH": "16384",
     "OLLAMA_GPU_OVERHEAD": "536870912"

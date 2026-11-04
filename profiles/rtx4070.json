@@ -1,20 +1,22 @@
 {
-  "_comment": "12GB RTX 4070 / 32GB RAM: every model sits fully in VRAM (≈8GB weights + KV cache at 16K context).",
+  "_comment": "12GB RTX 4070 / 32GB RAM: the small-model node. Gemma 4 12B is shared with the Blackwell for like-for-like comparisons.",
   "roles": {
     "workhorse": "gemma4:12b",
     "vision": "gemma4:12b",
     "fast": "gemma4:e4b",
-    "reasoner": "qwen3.5:9b",
+    "reasoner": "qwen3.5:4b",
     "chat_default": "gemma4:12b"
   },
   "pull": [
     "gemma4:12b",
-    "qwen3.5:9b",
     "gemma4:e4b",
+    "qwen3.5:4b",
+    "qwen3.5:2b",
+    "lfm3:1.7b",
     "nomic-embed-text"
   ],
   "env": {
-    "OLLAMA_MAX_LOADED_MODELS": "2",
+    "OLLAMA_MAX_LOADED_MODELS": "1",
     "OLLAMA_NUM_PARALLEL": "1",
     "OLLAMA_KEEP_ALIVE": "10m",
     "OLLAMA_CONTEXT_LENGTH": "16384",
