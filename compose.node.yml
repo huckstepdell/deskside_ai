@@ -27,5 +27,38 @@ services:
               count: all
               capabilities: [gpu]
 
+  # Dedicated Ollama for the FIM/autocomplete model, never unloaded (OLLAMA_KEEP_ALIVE=-1),
+  # so chat model swaps on the main instance (11435) can't evict it. Port 11436.
+  # Skip it on nodes that don't serve autocomplete: docker compose up -d node
+  fim:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    environment:
+      FIM_MODEL: ${FIM_MODEL:-qwen2.5-coder:1.5b-base}
+      OLLAMA_KEEP_ALIVE: "-1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_CONTEXT_LENGTH: "4096"
+    ports:
+      - "${BIND_IP:-0.0.0.0}:11436:11434"
+    volumes:
+      - ollama-fim:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve &
+        until ollama list >/dev/null 2>&1; do sleep 1; done
+        ollama pull "$$FIM_MODEL"
+        ollama run "$$FIM_MODEL" "" >/dev/null
+        wait
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
 volumes:
   ollama:
+  ollama-fim:

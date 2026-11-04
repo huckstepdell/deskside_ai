@@ -5,32 +5,6 @@ schema: v1
 # contextLength matches each server's OLLAMA_CONTEXT_LENGTH (profiles/*.json);
 # maxTokens is kept well under it so the prompt still has room.
 models:
-  # NPU models (8K window, per the Aperture config)
-  - name: NPU FIM Autocomplete
-    provider: openai
-    model: npu-fim-qwen25-coder-0p5b
-    apiBase: http://pro7:4001/v1
-    useLegacyCompletionsEndpoint: true
-    roles:
-      - autocomplete
-    autocompleteOptions:
-      debounceDelay: 200
-      maxPromptTokens: 1024
-      onlyMyCode: true
-
-  - name: NPU Instruct
-    provider: openai
-    model: npu-chat-qwen25-coder-0p5b-instruct
-    apiBase: http://aperture/v1
-    roles:
-      - chat
-      - edit
-      - apply
-    defaultCompletionOptions:
-      contextLength: 8192
-      temperature: 0.2
-      maxTokens: 2048
-
   # GB10 models (16K server context)
   - name: GB10 Coder
     provider: openai
@@ -58,21 +32,18 @@ models:
       temperature: 0.2
       maxTokens: 6144
 
-  # Blackwell models (16K server context)
-  - name: Blackwell Coder
+  - name: GB10 GPT OSS
     provider: openai
-    model: qwen2.5-coder:14b
+    model: gpt-oss:latest
     apiBase: http://aperture/v1
-
     roles:
       - chat
-      - edit
-      - apply
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 4096
+      maxTokens: 6144
 
+  # Blackwell models (16K server context)
   - name: Blackwell Gemma 4 12B
     provider: openai
     model: blackwell4000_ollama/gemma4:12b
@@ -97,12 +68,53 @@ models:
       temperature: 0.2
       maxTokens: 6144
 
+  - name: Blackwell MiMo V2.6 9B
+    provider: openai
+    model: blackwell4000_ollama/mimo-v2.6:9b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
+  - name: Blackwell MiMo V2.6 9B Q8
+    provider: openai
+    model: blackwell4000_ollama/mimo-v2.6:9b-q8_0
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 6144
+
+  # FIM runs on a dedicated always-loaded Ollama (the `fim` service in compose.node.yml, port 11436) so chat
+  # model swaps on 11435 never evict it. keepAlive -1 matches that instance's setting.
   - name: Blackwell FIM Autocomplete
     provider: ollama
     model: qwen2.5-coder:1.5b-base
-    apiBase: http://pro-max-plus:11435
+    apiBase: http://pro-max-plus:11436
     roles:
       - autocomplete
+    defaultCompletionOptions:
+      keepAlive: -1
+    autocompleteOptions:
+      debounceDelay: 200
+      maxPromptTokens: 1024
+      onlyMyCode: true
+
+  - name: RTX 4070 FIM Autocomplete
+    provider: ollama
+    model: qwen2.5-coder:1.5b-base
+    apiBase: http://aipc:11436
+    roles:
+      - autocomplete
+    defaultCompletionOptions:
+      keepAlive: -1
     autocompleteOptions:
       debounceDelay: 200
       maxPromptTokens: 1024
@@ -122,9 +134,9 @@ models:
       temperature: 0.2
       maxTokens: 4096
 
-  - name: RTX 4070 Qwen 3.5 Reasoner
+  - name: RTX 4070 Qwen 3.5 4B
     provider: openai
-    model: rtx4070_ollama/qwen3.5:9b
+    model: rtx4070_ollama/qwen3.5:4b
     apiBase: http://aperture/v1
     roles:
       - chat
@@ -133,9 +145,31 @@ models:
       temperature: 0.2
       maxTokens: 6144
 
+  - name: RTX 4070 Qwen 3.5 2B
+    provider: openai
+    model: rtx4070_ollama/qwen3.5:2b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
   - name: RTX 4070 Gemma 4 Fast
     provider: openai
     model: rtx4070_ollama/gemma4:e4b
+    apiBase: http://aperture/v1
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 16384
+      temperature: 0.2
+      maxTokens: 4096
+
+  - name: RTX 4070 LFM3 1.7B
+    provider: openai
+    model: rtx4070_ollama/lfm3:1.7b
     apiBase: http://aperture/v1
     roles:
       - chat
