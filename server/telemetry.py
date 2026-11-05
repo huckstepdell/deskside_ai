@@ -130,6 +130,9 @@ def device_info() -> dict:
     if NVML_OK:
         with suppress(pynvml.NVMLError):
             info["gpu"] = pynvml.nvmlDeviceGetName(_NVML_HANDLE)
+        vram = vram_gb()
+        if vram and os.environ.get("DEVICE_NAME"):
+            info["memory"] = f"{round(vram[1])} GB GPU · {round(psutil.virtual_memory().total / 2**30)} GB system"
         with suppress(pynvml.NVMLError):
             info["driver"] = pynvml.nvmlSystemGetDriverVersion()
         with suppress(pynvml.NVMLError):
