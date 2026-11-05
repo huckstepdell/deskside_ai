@@ -1,4 +1,4 @@
-/* Dell Pro Max GB10 demo dashboard — frontend logic */
+/* Dell AI demo dashboard — frontend logic */
 "use strict";
 
 const $ = (id) => document.getElementById(id);
@@ -840,8 +840,8 @@ const AR_PRESETS = [
   { label: "Same model, two loadouts", role: "workhorse",
     a: { host: "gb10", model: "", ctx: 4096 }, b: { host: "gb10", model: "", ctx: "max" },
     prompt: "In 100 words, what should a small business know before adopting AI?" },
-  { label: "Watch it think",
-    a: { host: "gb10", model: "qwen3.8:27b" }, b: { host: "gb10", model: "qwen3-coder-next:latest" },
+  { label: "Watch it think", roles: ["reasoner", "fast"],
+    a: { host: "gb10", model: "" }, b: { host: "gb10", model: "" },
     prompt: "Alice has 3 brothers and 2 sisters. How many sisters does Alice's brother have? Explain your answer." },
   { label: "Thinking on vs off", role: "reasoner",
     a: { host: "gb10", model: "", think: true }, b: { host: "gb10", model: "", think: false },
@@ -849,24 +849,37 @@ const AR_PRESETS = [
   { label: "Precise vs creative", role: "workhorse",
     a: { host: "gb10", model: "", temp: 0 }, b: { host: "gb10", model: "", temp: 1.2 },
     prompt: "Write a two-sentence product description for a stainless steel water bottle." },
-  { label: "The speed paradox",
-    a: { host: "gb10", model: "qwen3.8:27b" }, b: { host: "gb10", model: "qwen3-coder-next:latest" },
+  { label: "The speed paradox", roles: ["fast", "workhorse"],
+    a: { host: "gb10", model: "" }, b: { host: "gb10", model: "" },
     prompt: "List 10 practical uses for local AI in a small business — one line each, no preamble." },
-  { label: "David vs Goliath",
-    a: { host: "gb10", model: "gemma4:e4b" }, b: { host: "gb10", model: "qwen3.5:122b-a10b" },
+  { label: "David vs Goliath", roles: ["fast", "reasoner"],
+    a: { host: "gb10", model: "" }, b: { host: "gb10", model: "" },
     prompt: "Our 40-person company wants to adopt AI, but our customer data can't leave the building. Outline a pragmatic 90-day adoption plan, including the two biggest risks." },
-  { label: "The specialist trap",
-    a: { host: "gb10", model: "qwen3-coder-next:latest" }, b: { host: "gb10", model: "nemotron-3.5-lightning:30b" },
+  { label: "The specialist trap", roles: ["fast", "workhorse"],
+    a: { host: "gb10", model: "" }, b: { host: "gb10", model: "" },
     prompt: "Write a short, warm apology email to a customer whose order has now arrived damaged twice." },
-  { label: "The trick question",
-    a: { host: "gb10", model: "gemma4:e4b" }, b: { host: "gb10", model: "qwen3.8:27b" },
+  { label: "The trick question", roles: ["fast", "reasoner"],
+    a: { host: "gb10", model: "" }, b: { host: "gb10", model: "" },
     prompt: "Summarize the meeting we had yesterday about the Henderson account." },
 ];
+
+const AR_ROLE_FALLBACKS = {
+  fast: ["gemma4:e4b", "qwen3.5:2b", "lfm3:1.7b", "qwen2.5-coder:7b"],
+  workhorse: ["gemma4:12b", "nemotron-3.5-lightning:30b", "qwen3.8:27b", "gemma4:e4b"],
+  reasoner: ["qwen3.8:27b", "qwen3.5:4b", "gemma4:12b", "qwen3.5:9b", "gemma4:e4b"],
+};
 
 let arHosts = [];
 const arPowerCharts = {};
 
 const arHost = (key) => arHosts.find((h) => h.key === key);
+function arRoleModel(role, hostKey, avoid = "") {
+  const models = arHost(hostKey)?.models || [];
+  const installed = new Set(models.map((m) => m.name));
+  const candidates = [roleModel(role), ...(AR_ROLE_FALLBACKS[role] || [])];
+  return candidates.find((name) => name && name !== avoid && installed.has(name)) ||
+    models.find((m) => m.name !== avoid)?.name || "";
+}
 
 /* 4096 → "4k", 131072 → "128k", 262144 → "262k", 1048576 → "1M" — past
    128k, model cards quote decimal thousands (Qwen's "262k"), so match them */
@@ -1028,15 +1041,24 @@ async function arPickChanged(side, loadout) {
 
 async function loadArena() {
   arHosts = await apiJSON("/api/hosts");
-  // bind the cross-machine preset to the first online remote host
+  const primary = arHost("gb10");
+  // Bind presets to models actually installed in this deployment.
   const remote = arHosts.find((h) => h.key !== "gb10" && h.online);
   for (const p of AR_PRESETS.filter((x) => x.crossMachine)) {
-    const m = roleModel("fast") || roleModel("workhorse");
-    p.a.model = m;
-    p.b = { host: remote?.key || "", model: m };
+    const shared = primary?.models.find((m) => remote?.models.some((r) => r.name === m.name));
+    p.a = { host: primary?.key || "", model: shared?.name || "" };
+    p.b = { host: remote?.key || "", model: shared?.name || "" };
   }
   for (const p of AR_PRESETS.filter((x) => x.role)) {
-    p.a.model = p.b.model = roleModel(p.role);
+    p.a = { ...p.a, host: primary?.key || "", model: arRoleModel(p.role, primary?.key) };
+    p.b = { ...p.b, host: primary?.key || "", model: p.a.model };
+  }
+  for (const p of AR_PRESETS.filter((x) => x.roles)) {
+    p.a = { ...p.a, host: primary?.key || "", model: arRoleModel(p.roles[0], primary?.key) };
+    p.b = {
+      ...p.b, host: primary?.key || "",
+      model: arRoleModel(p.roles[1], primary?.key, p.a.model),
+    };
   }
   const hostOpts = arHosts
     .map((h) => `<option value="${h.key}" ${h.online ? "" : "disabled"}>${h.label}${h.online ? "" : " (offline)"}</option>`)
@@ -1053,8 +1075,8 @@ async function loadArena() {
     });
     if (!arPowerCharts[side]) arPowerCharts[side] = makeSpark(`arPower${side}`, COLORS.pwr);
   }
-  arFillModels("A", roleModel("reasoner") || roleModel("workhorse"));
-  arFillModels("B", roleModel("fast") || roleModel("workhorse"));
+  arFillModels("A", arRoleModel("reasoner", "gb10"));
+  arFillModels("B", arRoleModel("fast", "gb10"));
   const has = (ref) => {
     const h = arHost(ref.host);
     return h?.online && h.models.some((m) => m.name === ref.model);
@@ -1166,7 +1188,7 @@ function arRenderMemBars() {
   }));
 }
 
-function arRunPane(side, host, model, prompt, signal) {
+async function arRunPane(side, host, model, prompt, signal) {
   const label = $(`arModel${side}`).selectedOptions[0]?.textContent || model;
   const out = $(`arOut${side}`);
   const v = $(`arStats${side}`).querySelectorAll(".v");
@@ -1199,7 +1221,8 @@ function arRunPane(side, host, model, prompt, signal) {
   if (arLoadout[side].temp !== "auto") options.temperature = arLoadout[side].temp;
   if (Object.keys(options).length) body.options = options;
   if (arLoadout[side].think !== "auto") body.think = arLoadout[side].think;
-  return streamSSE("/api/chat", body, {
+  let streamError = null;
+  await streamSSE("/api/chat", body, {
     message: (d) => {
       if (d.think) { if (!first) first = Date.now(); nThink++; }
       if (d.token) { if (!first) first = Date.now(); nAnswer++; }
@@ -1234,8 +1257,12 @@ function arRunPane(side, host, model, prompt, signal) {
       }
       target.finish(null);
     },
-    error: (d) => target.setError(`Error: ${d.error}`),
+    error: (d) => {
+      streamError = d.error || "Model request failed";
+      target.setError(`Error: ${streamError}`);
+    },
   }, signal);
+  if (streamError) throw new Error(streamError);
 }
 
 const arAbort = { A: null, B: null };
@@ -1289,6 +1316,7 @@ async function arRun(sides) {
       arStopPower(s, mon);
     }
   };
+  const failures = [];
   try {
     if (sequential) {
       $("arOutB").textContent = "Waits for A to finish…";
@@ -1296,7 +1324,11 @@ async function arRun(sides) {
         if (arAbort[s].signal.aborted) break;
         if (picks[s].host === "gb10") await arEnsureLoaded(picks[s].model, picks[s].model, stageOpts(s));
         $("arStatus").textContent = AR_SAME_MODEL;
-        await runOne(s).catch(() => {});
+        try {
+          await runOne(s);
+        } catch (err) {
+          failures.push(`${picks[s].model}: ${err.message}`);
+        }
       }
     } else {
       for (const s of sides) {
@@ -1310,11 +1342,19 @@ async function arRun(sides) {
           ? "Running on both machines at once — each has its own silicon, no shared bandwidth."
           : "Running both at once — note they share this GPU's memory bandwidth, so each runs slower than solo.")
         : `Running on ${arHost(picks[sides[0]].host)?.label || picks[sides[0]].host}…`;
-      await Promise.allSettled(sides.map(runOne));
+      const results = await Promise.allSettled(sides.map(runOne));
+      results.forEach((result, i) => {
+        if (result.status === "rejected") {
+          failures.push(`${picks[sides[i]].model}: ${result.reason?.message || result.reason}`);
+        }
+      });
     }
-    $("arStatus").textContent = (sides.some((s) => arAbort[s].signal.aborted)
-      ? "Stopped." : "Done — compare the numbers above each answer.") +
-      [...new Set(arSpilled)].map((l) => ` Part of ${l} spilled to the CPU — that is what slow looks like.`).join("");
+    $("arStatus").textContent = sides.some((s) => arAbort[s].signal.aborted)
+      ? "Stopped."
+      : failures.length
+        ? `Run failed: ${failures.join("; ")}`
+        : "Done — compare the numbers above each answer." +
+          [...new Set(arSpilled)].map((l) => ` Part of ${l} spilled to the CPU — that is what slow looks like.`).join("");
   } catch (err) {
     $("arStatus").textContent = `Error: ${err.message}`;
   } finally {
@@ -1326,7 +1366,7 @@ async function arRun(sides) {
 $("arRunA").addEventListener("click", () => arRun(["A"]));
 $("arRunB").addEventListener("click", () => arRun(["B"]));
 $("arGoBoth").addEventListener("click", () => arRun(["A", "B"]));
-$("arForm").addEventListener("submit", (e) => e.preventDefault());
+$("arForm").addEventListener("submit", (e) => { e.preventDefault(); arRun(["A", "B"]); });
 $("arStop").addEventListener("click", () => { arAbort.A?.abort(); arAbort.B?.abort(); });
 
 /* ============================================================

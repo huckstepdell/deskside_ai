@@ -203,8 +203,8 @@ def build_docout_pdf(doc: dict) -> bytes:
     return buf.getvalue()
 
 
-GEN_SYSTEM = """You write demo scenario pages for a Dell Pro Max GB10 — a desk-side AI
-supercomputer that runs large AI models fully locally (private, offline-capable,
+GEN_SYSTEM = """You write demo scenario pages for Dell AI systems — desk-side hardware
+that runs large AI models locally (private, offline-capable,
 no per-token cloud costs). A sales engineer will present this page to a customer.
 
 Write in the second person to the presenter, concrete and confident, no hype

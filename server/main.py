@@ -1,4 +1,4 @@
-"""GB10 Demo Dashboard — FastAPI backend.
+"""Dell AI Demo — FastAPI backend.
 
 Run:  uvicorn server.main:app --host 0.0.0.0 --port 8080 (the container runs this)
 """
@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
     await telemetry.stop_sampler()
 
 
-app = FastAPI(title="GB10 Demo Dashboard", lifespan=lifespan)
+app = FastAPI(title="Dell AI Demo", lifespan=lifespan)
 
 SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 

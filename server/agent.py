@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     await telemetry.stop_sampler()
 
 
-app = FastAPI(title="GB10 Demo metrics agent", lifespan=lifespan)
+app = FastAPI(title="Dell AI Demo metrics agent", lifespan=lifespan)
 
 
 @app.get("/api/device")

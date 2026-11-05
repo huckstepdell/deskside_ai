@@ -1,4 +1,4 @@
-# AI Demo Dashboard
+# Dell AI Demo
 
 A local, customer-facing demo environment for Dell AI hardware (**Pro Max GB10**, RTX 4070 and Blackwell 4000 nodes). One
 window, zero terminal: pre-built AI demos plus live silicon telemetry, so an
