@@ -107,6 +107,14 @@
       </div>
 
       <div class="chart-grid">
+      <div class="panel" id="sysMemPanel" hidden>
+        <div class="panel-title">System memory in use <span class="panel-unit">GB</span></div>
+        <div class="chart-wrap"><canvas id="chart-sysmem"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">CPU load per core <span class="panel-unit">20 Arm cores · %</span></div>
+        <div class="chart-wrap"><canvas id="chart-cores"></canvas></div>
+      </div>
       <div class="panel">
         <div class="panel-title">GPU utilization <span class="panel-unit">%</span></div>
         <div class="chart-wrap"><canvas id="chart-gpu"></canvas></div>
@@ -118,14 +126,6 @@
       <div class="panel">
         <div class="panel-title">GPU power draw <span class="panel-unit">watts</span></div>
         <div class="chart-wrap"><canvas id="chart-pwr"></canvas></div>
-      </div>
-      <div class="panel" id="sysMemPanel" hidden>
-        <div class="panel-title">System memory in use <span class="panel-unit">GB</span></div>
-        <div class="chart-wrap"><canvas id="chart-sysmem"></canvas></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">CPU load per core <span class="panel-unit">20 Arm cores · %</span></div>
-        <div class="chart-wrap"><canvas id="chart-cores"></canvas></div>
       </div>
       </div><!-- /chart-grid -->
     </div><!-- /ov-main -->
