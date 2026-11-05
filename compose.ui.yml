@@ -9,6 +9,7 @@ services:
       context: .
       args:
         INSTALL_IMAGEGEN: ${INSTALL_IMAGEGEN:-0}
+        INSTALL_RUNBOOKS: ${INSTALL_RUNBOOKS:-0}
     image: ai-demo-ui:latest
     restart: unless-stopped
     environment:
@@ -18,6 +19,9 @@ services:
       TELEMETRY_URL: ${TELEMETRY_URL:-}
       PRIMARY_LABEL: ${PRIMARY_LABEL:-}
       DEVICE_NAME: ${DEVICE_NAME:-}
+      DOWNLOAD_IMAGEGEN: ${DOWNLOAD_IMAGEGEN:-0}
+      HF_HOME: ${HF_HOME:-/app/data/huggingface}
+      RUNBOOKS_DIR: ${RUNBOOKS_DIR:-/opt/dgx-spark-playbooks/nvidia}
       # extra comparison nodes as JSON, e.g. {"rtx4070":{"label":"RTX 4070","url":"http://aipc:11435","telemetry_url":"http://aipc:9101"}}
       DEMO_HOSTS: ${DEMO_HOSTS:-}
     ports:

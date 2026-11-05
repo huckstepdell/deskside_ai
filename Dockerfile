@@ -1,7 +1,9 @@
 FROM ollama/ollama:latest
 
-# Image Studio (SDXL) pulls ~4GB of PyTorch wheels; opt in with --build-arg INSTALL_IMAGEGEN=1
+# Image Studio pulls several GB of PyTorch wheels; opt in with INSTALL_IMAGEGEN=1.
+# NVIDIA DGX Spark playbooks are also opt-in with INSTALL_RUNBOOKS=1.
 ARG INSTALL_IMAGEGEN=0
+ARG INSTALL_RUNBOOKS=0
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -10,6 +12,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 python3-venv curl ca-certificates openssh-client \
+    && if [ "$INSTALL_RUNBOOKS" = "1" ]; then apt-get install -y --no-install-recommends git; fi \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -18,7 +21,8 @@ ENV PATH=/opt/venv/bin:$PATH
 
 COPY requirements.txt requirements-imagegen.txt ./
 RUN pip install --no-cache-dir -r requirements.txt \
-    && if [ "$INSTALL_IMAGEGEN" = "1" ]; then pip install --no-cache-dir -r requirements-imagegen.txt; fi
+    && if [ "$INSTALL_IMAGEGEN" = "1" ]; then pip install --no-cache-dir -r requirements-imagegen.txt; fi \
+    && if [ "$INSTALL_RUNBOOKS" = "1" ]; then git clone --depth 1 https://github.com/NVIDIA/dgx-spark-playbooks.git /opt/dgx-spark-playbooks; fi
 
 COPY . .
 RUN chmod +x docker/entrypoint.sh

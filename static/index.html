@@ -62,7 +62,7 @@
       <div class="spark-wrap"><canvas class="spark" id="s-gpu" aria-label="GPU utilization sparkline"></canvas></div>
     </div>
     <div class="tile" data-metric="mem">
-      <div class="tile-head"><span class="dot" style="background:var(--c-mem)"></span>Unified memory</div>
+      <div class="tile-head"><span class="dot" style="background:var(--c-mem)"></span>Memory</div>
       <div class="tile-value"><span id="v-mem">–</span><span class="unit">/ <span id="v-memtotal">128</span> GB</span></div>
       <div class="spark-wrap"><canvas class="spark" id="s-mem" aria-label="Memory usage sparkline"></canvas></div>
     </div>
@@ -77,7 +77,7 @@
       <div class="spark-wrap"><canvas class="spark" id="s-tmp" aria-label="GPU temperature sparkline"></canvas></div>
     </div>
     <div class="tile" data-metric="cpu">
-      <div class="tile-head"><span class="dot" style="background:var(--c-cpu)"></span>CPU (20 cores)</div>
+      <div class="tile-head"><span class="dot" style="background:var(--c-cpu)"></span>CPU</div>
       <div class="tile-value"><span id="v-cpu">–</span><span class="unit">%</span></div>
       <div class="spark-wrap"><canvas class="spark" id="s-cpu" aria-label="CPU utilization sparkline"></canvas></div>
     </div>
@@ -99,10 +99,10 @@
       </div>
 
       <div class="panel mem-panel">
-        <div class="panel-title">Loaded AI models — unified memory
-          <span class="panel-unit">watch models move in and out of the <span id="memTotalLabel">128</span> GB shared pool</span>
+        <div class="panel-title">Loaded AI models — memory use
+          <span class="panel-unit">tracked models and system use · <span id="memTotalLabel">—</span> GB total</span>
         </div>
-        <div class="membar" id="membar" role="img" aria-label="Unified memory occupancy by model"></div>
+        <div class="membar" id="membar" role="img" aria-label="Memory use by loaded model"></div>
         <div class="mem-legend" id="memLegend"></div>
       </div>
 
@@ -112,7 +112,7 @@
         <div class="chart-wrap"><canvas id="chart-gpu"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title">Unified memory in use <span class="panel-unit">GB · shared by CPU &amp; GPU</span></div>
+        <div class="panel-title">Memory in use <span class="panel-unit">GB</span></div>
         <div class="chart-wrap"><canvas id="chart-mem"></canvas></div>
       </div>
       <div class="panel">
@@ -279,7 +279,7 @@
         <!-- beat: prep — 76 GB walking into the pool is a selling moment -->
         <div class="ld-beat ld-center" id="ldPrep" hidden>
           <div class="ld-kick" id="ldPrepKick">Getting ready</div>
-          <h3 class="ld-huge" id="ldPrepTitle">Clearing the memory pool</h3>
+          <h3 class="ld-huge" id="ldPrepTitle">Making room in memory</h3>
           <div class="ld-meter"><div class="ld-meter-fill" id="ldPrepFill"></div></div>
           <p class="ld-sub" id="ldPrepSub">&nbsp;</p>
         </div>
@@ -737,7 +737,7 @@
     <details class="uc-notes">
       <summary>Presenter notes</summary>
       <ul>
-        <li>The agent's brain is the same Nemotron the rest of the demo uses — one model serving chat, batch, casework, and an agent simultaneously is itself the unified-memory story.</li>
+        <li>The agent can share a model with chat and other workflows, showing how local AI hardware can serve multiple tasks.</li>
         <li>No channels (Telegram etc.) are connected on this box by design — nothing external can reach it, and it can't reach out.</li>
         <li>If the agent seems slow to first reply, the model may be cold-loading; the status line below the button shows sandbox health.</li>
       </ul>

@@ -1,0 +1,11 @@
+# Optional overlay for Image Studio. Use with compose.ui.yml when the dashboard
+# container should run SDXL on the host's NVIDIA GPU.
+services:
+  ui:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

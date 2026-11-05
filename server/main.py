@@ -5,6 +5,8 @@ Run:  uvicorn server.main:app --host 0.0.0.0 --port 8080 (the container runs thi
 
 import asyncio
 import base64
+import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -18,6 +20,14 @@ from . import (agentworks, batchworks, bench, casework, chat, config, imagegen, 
                rag, runbooks, scenarios, telemetry, tokens)
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+logger = logging.getLogger(__name__)
+
+
+async def _download_sdxl_model():
+    try:
+        await asyncio.to_thread(imagegen.download_model)
+    except Exception:
+        logger.exception("Optional SDXL model download failed")
 
 
 async def _sdxl_idle_reaper():
@@ -31,6 +41,8 @@ async def _sdxl_idle_reaper():
 async def lifespan(app: FastAPI):
     telemetry.start_sampler()
     await rag.load_preloaded_docs()
+    if os.environ.get("DOWNLOAD_IMAGEGEN") == "1":
+        asyncio.create_task(_download_sdxl_model())
     reaper = asyncio.create_task(_sdxl_idle_reaper())
     yield
     reaper.cancel()
@@ -147,6 +159,7 @@ async def preflight():
     except httpx.HTTPError:
         pass
     checks["sdxl_cached"] = imagegen.is_cached()
+    checks["sdxl_installed"] = imagegen.is_installed()
     checks["sdxl_loaded"] = imagegen.is_loaded()
     checks["runbooks"] = sum(1 for r_ in runbooks.list_runbooks() if r_["available"])
     checks["rag_docs"] = len(rag.list_docs())

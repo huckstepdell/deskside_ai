@@ -5,9 +5,11 @@ curated subset of flagship runbooks — already downloaded, ready to walk
 through offline — and render their markdown in the dashboard.
 """
 
+import os
 from pathlib import Path
 
-PLAYBOOKS_ROOT = Path.home() / "dgx-spark-playbooks" / "nvidia"
+PLAYBOOKS_ROOT = Path(os.environ.get("RUNBOOKS_DIR") or
+                      Path.home() / "dgx-spark-playbooks" / "nvidia")
 SITE_BASE = "https://build.nvidia.com/spark"
 
 # Curated, demo-ordered subset. (slug = directory name in the repo)

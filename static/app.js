@@ -301,7 +301,7 @@ function connectTelemetry() {
 }
 
 /* ============================================================
-   Memory view: which models occupy the unified pool right now
+   Memory view: estimated model footprint and system memory use
    ============================================================ */
 // color follows the entity: a model keeps its color for the whole session
 const MEM_SLOT_COLORS = [COLORS.gpu, COLORS.cpu, COLORS.pwr, COLORS.tmp, COLORS.mem];
@@ -483,10 +483,14 @@ async function refreshPreflight() {
     item(pf.chat_models.length > 0, "Chat models", `${pf.chat_models.length} ready`),
     item(pf.vision_model, "Vision model", pf.vision_model ? "ready" : "missing"),
     item(pf.embed_model, "Docs Q&A index model", pf.embed_model ? "ready" : "missing"),
-    item(pf.sdxl_cached, "Image generation (SDXL)", pf.sdxl_loaded ? "warmed up" : pf.sdxl_cached ? "cached — warm up before call" : "not downloaded"),
+    item(pf.sdxl_installed && pf.sdxl_cached, "Image generation (SDXL)",
+      !pf.sdxl_installed ? "not installed in this image"
+        : pf.sdxl_loaded ? "warmed up"
+          : pf.sdxl_cached ? "cached — warm up before call" : "not downloaded"),
     item(pf.runbooks > 0, "Runbooks", `${pf.runbooks} available offline`),
   ].join("");
 }
+setInterval(() => refreshPreflight().catch((err) => console.warn("Preflight refresh failed", err)), 30000);
 
 /* ============================================================
    Chat
@@ -1520,7 +1524,7 @@ function ldSlam(side, n, d) {
   el.hidden = false;   // display:none -> flex restarts the slam animation
 }
 
-/* ---- the prep beat: 76 GB physically walking into the pool ------------ */
+/* ---- the prep beat: a large model loading into memory ------------------ */
 
 function ldPrepBeat(d) {
   ldBeat("ldPrep");
@@ -1535,10 +1539,10 @@ function ldPrepBeat(d) {
   }
   if (d.phase === "clearing") {
     $("ldPrepKick").textContent = "Making room";
-    $("ldPrepTitle").textContent = "Clearing the memory pool";
+    $("ldPrepTitle").textContent = "Making room in memory";
     fill.className = "ld-meter-fill indeterminate";
     $("ldPrepSub").textContent = `${gbs(d.size_gb)} GB of model is about to walk into `
-      + `${gbs(d.pool_gb)} GB of unified memory.`;
+      + `${gbs(d.pool_gb)} GB of available memory.`;
   } else if (d.phase === "loading") {
     /* The server measures real committed memory, but the box commits the whole
        76 GB inside five seconds and then spends fifteen more actually reading
@@ -1557,7 +1561,7 @@ function ldPrepBeat(d) {
     fill.className = "ld-meter-fill";
     fill.style.width = `${frac * 100}%`;
     $("ldPrepKick").textContent = "Loading";
-    $("ldPrepTitle").textContent = `${gbs(size)} GB into one memory pool`;
+    $("ldPrepTitle").textContent = `Loading ${gbs(size)} GB into memory`;
     $("ldPrepSub").textContent = `${Math.round(size * frac)} GB of ${gbs(size)} `
       + `· ${Math.round(d.elapsed)}s · nothing downloads, nothing leaves`;
   } else if (d.phase === "resident") {
@@ -1568,15 +1572,15 @@ function ldPrepBeat(d) {
     $("ldPrepTitle").textContent = d.elapsed >= 1
       ? `${gbs(d.size_gb)} GB in ${Math.round(d.elapsed)} seconds`
       : `${gbs(d.size_gb)} GB already resident`;
-    $("ldPrepSub").textContent = `${d.model} is in unified memory. `
-      + `${gbs(d.free_gb)} GB of the pool still free.`;
+    $("ldPrepSub").textContent = `${d.model} is loaded. `
+      + `${gbs(d.free_gb)} GB of memory remains available.`;
   } else if (d.phase === "ready") {
     fill.className = "ld-meter-fill";
     fill.style.width = "100%";
     $("ldPrepKick").textContent = "Both models resident";
-    $("ldPrepTitle").textContent = "Two models, one pool";
+    $("ldPrepTitle").textContent = "Two models loaded at once";
     $("ldPrepSub").textContent = `${gbs(d.resident_gb)} GB of models loaded at once, `
-      + `${gbs(d.free_gb)} GB of the ${gbs(d.pool_gb)} GB pool still free. Climbing.`;
+      + `${gbs(d.free_gb)} GB of ${gbs(d.pool_gb)} GB remains available. Climbing.`;
   } else if (d.status) {
     $("ldPrepSub").textContent = d.status;
   }

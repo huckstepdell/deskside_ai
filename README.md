@@ -2,10 +2,18 @@
 
 A local, customer-facing demo environment for Dell AI hardware (**Pro Max GB10**, RTX 4070 and Blackwell 4000 nodes). One
 window, zero terminal: pre-built AI demos plus live silicon telemetry, so an
-audience can watch the GPU, unified memory, and power respond to real AI
+audience can watch the GPU, memory, and power respond to real AI
 workloads in real time.
 
 Everything runs on your own hardware — no cloud, no internet needed during a demo.
+
+Image Studio and Runbooks are optional. Set `INSTALL_IMAGEGEN=1` to add SDXL
+dependencies, and `DOWNLOAD_IMAGEGEN=1` to cache its model weights at startup
+(`HF_HOME` defaults to the persistent `./data/huggingface` directory). The
+dashboard needs NVIDIA GPU access for image generation; use
+`compose.ui.gpu.yml` as an override when deploying with Docker Compose
+(`docker compose -f compose.ui.yml -f compose.ui.gpu.yml up -d --build`).
+Set `INSTALL_RUNBOOKS=1` to include NVIDIA's DGX Spark playbooks in the image.
 
 ## Deploy
 
@@ -59,7 +67,7 @@ OLLAMA_URL=http://pro-max-plus:11435 TELEMETRY_URL=http://pro-max-plus:9101 dock
 
 | Page | What it shows | The talking point |
 |---|---|---|
-| **Overview** | Specs, live GPU/memory/power/CPU charts, readiness lights, unified-memory bar, manual model load/unload dock | "A petaFLOP on a desk" |
+| **Overview** | Specs, live GPU/memory/power/CPU charts, readiness lights, memory-use bar, manual model load/unload dock | "AI at the desk side" |
 | **Chat** | Streaming chat with local LLMs, live tokens/sec | "ChatGPT-class, fully private" |
 | **Model Comparison** | Two modes. *Free prompt:* two models (or two *machines*) side by side — first-token, speed, reasoning vs answer tokens, cost, live wattage + tokens/Wh, plus the memory and context the load actually took. Each pane picks a *loadout* (context window, thinking on/off), and its spec line (MoE or dense, parameters, quantization, max context) is read from the model file itself. *Ladder:* a fixed 8 GB / 76 GB pairing climbs four tasks of rising difficulty, both resident at once, every ✓/✗ stamped by a Python checker | "You choose the trade-offs — and one box holds both choices" |
 | **Box Bench** | 14 code-graded accuracy tasks, deterministic scores, leaderboard | "Quality, with receipts" |
@@ -70,7 +78,7 @@ OLLAMA_URL=http://pro-max-plus:11435 TELEMETRY_URL=http://pro-max-plus:9101 dock
 | **Batch Works** | Bulk jobs (ticket triage, marketing copy) with a live ticker and reasoning toggle | "Your nightly batch job, at desk-side prices" |
 | **Agent Works** | One task, three ways: one-shot, everything-pasted-in, and a real tool-calling agent loop — with the step trace, the findings it records, and all three token bills | "This is why agentic AI needs its own hardware" |
 | **AI Agent** | NVIDIA NemoClaw status + launch (OpenClaw in an OpenShell sandbox) | "An always-on agent, sandboxed" |
-| **Runbooks** | Every NVIDIA DGX Spark playbook in the local clone, flagships pinned | "Ready to go, already downloaded" |
+| **Runbooks** | NVIDIA DGX Spark playbooks found in the local clone, flagships pinned | "Practical guides for local AI" |
 | **Verticals** | Healthcare, Public Safety (+ Case Works workflow), Legal, Support, Field Service — scenario pages with bundled fictional sample data | Industry aha moments |
 
 The telemetry strip on top is always visible — every demo visibly moves the

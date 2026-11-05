@@ -11,6 +11,7 @@ models:
     model: gb10/gemma4:26b-a4b-it-qat
     apiBase: http://aperture/v1
     capabilities:
+      - tool_use
       - image_input
     roles:
       - chat
@@ -26,6 +27,7 @@ models:
     model: blackwell4000/gemma4:12b
     apiBase: http://aperture/v1
     capabilities:
+      - tool_use
       - image_input
     roles:
       - chat
@@ -41,6 +43,7 @@ models:
     model: rtx4070/gemma4:12b
     apiBase: http://aperture/v1
     capabilities:
+      - tool_use
       - image_input
     roles:
       - chat
@@ -69,8 +72,6 @@ models:
     provider: openai
     model: gb10/qwen3.8:27b
     apiBase: http://aperture/v1
-    capabilities:
-      - image_input
     roles:
       - chat
       - edit
@@ -85,6 +86,7 @@ models:
     model: gb10/gemma4:e4b
     apiBase: http://aperture/v1
     capabilities:
+      - tool_use
       - image_input
     roles:
       - chat
@@ -98,6 +100,9 @@ models:
     provider: openai
     model: blackwell4000/nemotron-3.5-bolt:e4b-q8_0
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
+      - image_input
     roles:
       - chat
       - edit
@@ -111,6 +116,9 @@ models:
     provider: openai
     model: blackwell4000/nemotron-3.5-bolt:e4b
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
+      - image_input
     roles:
       - chat
     defaultCompletionOptions:
@@ -133,6 +141,9 @@ models:
     provider: openai
     model: blackwell4000/qwen3.5:9b
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
+      - image_input
     roles:
       - chat
     defaultCompletionOptions:
@@ -173,6 +184,8 @@ models:
     provider: openai
     model: rtx4070/qwen2.5-coder:7b
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
     roles:
       - chat
       - edit
@@ -186,6 +199,9 @@ models:
     provider: openai
     model: rtx4070/qwen3.5:4b
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
+      - image_input
     roles:
       - chat
     defaultCompletionOptions:
@@ -197,6 +213,9 @@ models:
     provider: openai
     model: rtx4070/qwen3.5:2b
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
+      - image_input
     roles:
       - chat
     defaultCompletionOptions:
@@ -209,6 +228,7 @@ models:
     model: rtx4070/gemma4:e4b
     apiBase: http://aperture/v1
     capabilities:
+      - tool_use
       - image_input
     roles:
       - chat
@@ -221,6 +241,8 @@ models:
     provider: openai
     model: rtx4070/lfm3:1.7b
     apiBase: http://aperture/v1
+    capabilities:
+      - tool_use
     roles:
       - chat
     defaultCompletionOptions:

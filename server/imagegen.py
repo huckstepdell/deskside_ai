@@ -8,8 +8,10 @@ progress is pushed to the client over SSE.
 
 import asyncio
 import base64
+import importlib.util
 import io
 import json
+import os
 import threading
 import time
 
@@ -92,8 +94,22 @@ def is_cached() -> bool:
     """Whether the SDXL weights exist locally (preflight check)."""
     from pathlib import Path
 
-    cache = Path.home() / ".cache/huggingface/hub" / ("models--" + MODEL_ID.replace("/", "--"))
+    cache_home = os.environ.get("HF_HOME") or str(Path.home() / ".cache/huggingface")
+    cache = Path(cache_home) / "hub" / ("models--" + MODEL_ID.replace("/", "--"))
     return cache.exists()
+
+
+def is_installed() -> bool:
+    return all(importlib.util.find_spec(module) for module in ("torch", "diffusers"))
+
+
+def download_model() -> None:
+    """Download SDXL weights into the configured Hugging Face cache."""
+    if not is_installed():
+        raise RuntimeError("Image Studio dependencies are missing; rebuild with INSTALL_IMAGEGEN=1")
+    from huggingface_hub import snapshot_download
+
+    snapshot_download(repo_id=MODEL_ID)
 
 
 async def warmup() -> None:
