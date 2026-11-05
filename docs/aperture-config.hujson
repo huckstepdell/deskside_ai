@@ -17,7 +17,6 @@
 				"nemotron-3.5-bolt:e4b-q8_0",
 				"nemotron-3.5-bolt:e4b",
 				"nemotron-3.5-lightning:30b",
-				"nomic-embed-text",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -36,7 +35,6 @@
 				"qwen3.5:2b",
 				"qwen2.5-coder:7b",
 				"lfm3:1.7b",
-				"nomic-embed-text",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -53,7 +51,6 @@
 				"qwen3.8:27b",
 				"gemma4:26b-a4b-it-qat",
 				"gemma4:e4b",
-				"nomic-embed-text",
 			],
 			"authorization": "bearer",
 			"compatibility": {
