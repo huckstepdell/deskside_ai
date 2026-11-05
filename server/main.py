@@ -76,6 +76,19 @@ async def telemetry_stream():
     return StreamingResponse(telemetry.sse_stream(), media_type="text/event-stream", headers=SSE_HEADERS)
 
 
+async def _node_sample() -> dict | None:
+    """Latest telemetry sample from the compute node's agent (None when running all-in-one)."""
+    if not config.TELEMETRY_URL:
+        return None
+    try:
+        async with httpx.AsyncClient() as client:
+            r = await client.get(f"{config.TELEMETRY_URL}/api/telemetry/latest", timeout=5)
+            r.raise_for_status()
+            return r.json().get("sample")
+    except (httpx.HTTPError, ValueError):
+        return None
+
+
 @app.get("/api/device")
 async def device():
     if config.TELEMETRY_URL:
@@ -83,9 +96,14 @@ async def device():
             async with httpx.AsyncClient() as client:
                 r = await client.get(f"{config.TELEMETRY_URL}/api/device", timeout=5)
                 r.raise_for_status()
-                return r.json()
+                info = r.json()
         except httpx.HTTPError:
-            pass
+            return telemetry.device_info()
+        # older node agents only report system memory; add the GPU's own from the live sample
+        sample = await _node_sample()
+        if sample and sample.get("vram_total_gb") and "GPU" not in info.get("memory", ""):
+            info["memory"] = f"{round(sample['vram_total_gb'])} GB GPU · {info.get('memory', '')}".replace(" memory", "")
+        return info
     return telemetry.device_info()
 
 
@@ -135,11 +153,16 @@ async def memory_view():
             "size_gb": sdxl_gb, "vram_gb": sdxl_gb, "source": "Image Studio", "expires_at": None,
         })
     vram = telemetry.vram_gb()
+    total_gb, used_gb = mem.total / 2**30, (mem.total - mem.available) / 2**30
+    node = await _node_sample()
+    if node:  # UI-only deployment: the figures belong to the compute node, not this container
+        vram = (node["vram_used_gb"], node["vram_total_gb"]) if node.get("vram_total_gb") else None
+        total_gb, used_gb = node["mem_total_gb"], node["mem_used_gb"]
     return {
         "vram_used_gb": vram[0] if vram else None,
         "vram_total_gb": vram[1] if vram else None,
-        "total_gb": round(mem.total / 2**30, 1),
-        "used_gb": round((mem.total - mem.available) / 2**30, 1),
+        "total_gb": round(total_gb, 1),
+        "used_gb": round(used_gb, 1),
         "models": models,
     }
 
