@@ -12,6 +12,7 @@
     "gemma4:e4b",
     "qwen3.5:4b",
     "qwen3.5:2b",
+    "qwen2.5-coder:7b",
     "lfm3:1.7b",
     "nomic-embed-text"
   ],

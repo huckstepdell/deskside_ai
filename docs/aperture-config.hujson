@@ -34,6 +34,7 @@
 				"gemma4:e4b",
 				"qwen3.5:4b",
 				"qwen3.5:2b",
+				"qwen2.5-coder:7b",
 				"lfm3:1.7b",
 				"nomic-embed-text",
 			],
@@ -49,7 +50,7 @@
 			"baseurl": "http://100.94.55.35:11435",
 			"models": [
 				"nemotron-3.5-lightning:30b",
-				"nemotron-3.5-bolt:latest",
+				"qwen3.8:27b",
 				"gemma4:26b-a4b-it-qat",
 				"gemma4:e4b",
 				"nomic-embed-text",
@@ -95,11 +96,11 @@
 			"max_output_tokens":     16384,
 		},
 		{
-			"model":        "gb10/nemotron-3.5-bolt:latest",
-			"display_name": "Chat - GB10 Nemotron 3.5 Bolt",
+			"model":        "gb10/qwen3.8:27b",
+			"display_name": "Code - GB10 Qwen 3.8 27B",
 			"priority":     -11,
 			"context_window_tokens": 65536,
-			"max_output_tokens":     16384,
+			"max_output_tokens":     12288,
 		},
 		{
 			"model":        "gb10/gemma4:e4b",
@@ -140,6 +141,13 @@
 		{
 			"model":        "rtx4070/gemma4:e4b",
 			"display_name": "Fast - RTX 4070 Gemma 4 E4B",
+			"priority":     -56,
+			"context_window_tokens": 16384,
+			"max_output_tokens":     4096,
+		},
+		{
+			"model":        "rtx4070/qwen2.5-coder:7b",
+			"display_name": "Code - RTX 4070 Qwen 2.5 Coder 7B",
 			"priority":     -56,
 			"context_window_tokens": 16384,
 			"max_output_tokens":     4096,
