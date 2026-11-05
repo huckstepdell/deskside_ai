@@ -228,6 +228,7 @@ const charts = {
   gpu: makeLineChart("chart-gpu", COLORS.gpu, { max: 100, unit: "%" }),
   mem: makeLineChart("chart-mem", COLORS.mem, { unit: " GB" }),
   pwr: makeLineChart("chart-pwr", COLORS.pwr, { unit: " W" }),
+  sysmem: makeLineChart("chart-sysmem", COLORS.cpu, { unit: " GB" }),
 };
 const coresChart = new Chart($("chart-cores"), {
   type: "bar",
@@ -261,6 +262,8 @@ function setMemMode(isVram) {
   gpuMemMode = isVram;
   $("t-mem").textContent = isVram ? "GPU Memory" : "Memory";
   $("chartMemTitle").textContent = isVram ? "GPU memory in use" : "Memory in use";
+  // with no separate VRAM, the main memory chart already is system memory
+  $("sysMemPanel").hidden = !isVram;
 }
 function applySample(s, redraw = true) {
   const label = new Date(s.t * 1000).toLocaleTimeString();
@@ -276,6 +279,7 @@ function applySample(s, redraw = true) {
   pushPoint(charts.gpu, label, s.gpu_util);
   pushPoint(charts.mem, label, memUsed);
   pushPoint(charts.pwr, label, s.gpu_power);
+  pushPoint(charts.sysmem, label, s.mem_used_gb);
 
   if (redraw) {
     $("v-gpu").textContent = Math.round(s.gpu_util);

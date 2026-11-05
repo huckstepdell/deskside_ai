@@ -184,6 +184,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
+.chart-grid .panel[hidden] { display: none; }
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
