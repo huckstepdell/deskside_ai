@@ -19,6 +19,18 @@
       "traits": "MoE 74B · 9B active · vision · reasoning",
       "size_gb": 25
     },
+    "nemotron-3.5-bolt:e4b-q8_0": {
+      "label": "Nemotron 3.5 Bolt · E4B (Q8)",
+      "blurb": "NVIDIA's compact agent model at 8-bit — fits a 16 GB GPU",
+      "traits": "compact E4B · Q8 · vision · tools · reasoning",
+      "size_gb": 9.8
+    },
+    "nemotron-3.5-bolt:e4b": {
+      "label": "Nemotron 3.5 Bolt · E4B",
+      "blurb": "NVIDIA's compact agent model, 4-bit — small and quick",
+      "traits": "compact E4B · Q4 · vision · tools · reasoning",
+      "size_gb": 7.9
+    },
     "nemotron-3.5-super:latest": {
       "label": "Nemotron 3.5 Super VL",
       "blurb": "NVIDIA's flagship open model — sees documents, 1M-token context",
@@ -78,18 +90,6 @@
       "blurb": "Liquid AI's tiny hybrid model — built for local agents",
       "traits": "hybrid 1.7B · tools · reasoning",
       "size_gb": 1.1
-    },
-    "mimo-v2.6:9b": {
-      "label": "MiMo V2.6 · 9B",
-      "blurb": "Xiaomi's code and agent model, distilled from Qwen",
-      "traits": "dense 9B · vision · reasoning · 256K context",
-      "size_gb": 6.6
-    },
-    "mimo-v2.6:9b-q8_0": {
-      "label": "MiMo V2.6 · 9B (Q8)",
-      "blurb": "Same model at higher-fidelity 8-bit quantization",
-      "traits": "dense 9B · Q8 · vision · reasoning",
-      "size_gb": 10
     }
   },
   "roles": {

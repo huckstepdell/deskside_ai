@@ -3,15 +3,16 @@
   "roles": {
     "workhorse": "gemma4:12b",
     "vision": "gemma4:12b",
-    "fast": "mimo-v2.6:9b",
+    "fast": "nemotron-3.5-bolt:e4b-q8_0",
     "reasoner": "qwen3.5:9b",
     "chat_default": "gemma4:12b"
   },
   "pull": [
     "gemma4:12b",
     "qwen3.5:9b",
-    "mimo-v2.6:9b",
-    "mimo-v2.6:9b-q8_0",
+    "nemotron-3.5-bolt:e4b-q8_0",
+    "nemotron-3.5-bolt:e4b",
+    "nemotron-3.5-lightning:30b",
     "nomic-embed-text"
   ],
   "env": {
