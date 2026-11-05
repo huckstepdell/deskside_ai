@@ -255,21 +255,32 @@ function pushPoint(chart, label, value, cap = HISTORY_POINTS) {
 }
 
 let strideCounter = 0;
+let gpuMemMode = false;
+function setMemMode(isVram) {
+  if (isVram === gpuMemMode) return;
+  gpuMemMode = isVram;
+  $("t-mem").textContent = isVram ? "GPU Memory" : "Memory";
+  $("chartMemTitle").textContent = isVram ? "GPU memory in use" : "Memory in use";
+}
 function applySample(s, redraw = true) {
   const label = new Date(s.t * 1000).toLocaleTimeString();
+  const hasVram = s.vram_used_gb != null && s.vram_total_gb != null;
+  setMemMode(hasVram);
+  const memUsed = hasVram ? s.vram_used_gb : s.mem_used_gb;
+  const memTotal = hasVram ? s.vram_total_gb : s.mem_total_gb;
   pushPoint(sparks.gpu, label, s.gpu_util);
-  pushPoint(sparks.mem, label, s.mem_used_gb);
+  pushPoint(sparks.mem, label, memUsed);
   pushPoint(sparks.pwr, label, s.gpu_power);
   pushPoint(sparks.tmp, label, s.gpu_temp);
   pushPoint(sparks.cpu, label, s.cpu_util);
   pushPoint(charts.gpu, label, s.gpu_util);
-  pushPoint(charts.mem, label, s.mem_used_gb);
+  pushPoint(charts.mem, label, memUsed);
   pushPoint(charts.pwr, label, s.gpu_power);
 
   if (redraw) {
     $("v-gpu").textContent = Math.round(s.gpu_util);
-    $("v-mem").textContent = s.mem_used_gb.toFixed(1);
-    $("v-memtotal").textContent = Math.round(s.mem_total_gb);
+    $("v-mem").textContent = memUsed.toFixed(1);
+    $("v-memtotal").textContent = Math.round(memTotal);
     $("v-pwr").textContent = Math.round(s.gpu_power);
     $("v-tmp").textContent = Math.round(s.gpu_temp);
     $("v-cpu").textContent = Math.round(s.cpu_util);
@@ -327,24 +338,31 @@ async function refreshMemoryView() {
   } catch {
     return;
   }
-  $("memTotalLabel").textContent = Math.round(data.total_gb);
   window.__memTotal = data.total_gb; // arena uses this for pairing fit checks
-  const modelsGb = data.models.reduce((sum, m) => sum + m.size_gb, 0);
-  const otherGb = Math.max(0, data.used_gb - modelsGb);
-  const pct = (gb) => `${(100 * gb) / data.total_gb}%`;
+  const vramMode = data.vram_total_gb != null;
+  $("memPanelTitle").textContent = vramMode ? "Loaded AI models — GPU memory use" : "Loaded AI models — memory use";
+  $("memPanelSub").textContent = vramMode ? "tracked models and other GPU use" : "tracked models and system use";
+  const total = vramMode ? data.vram_total_gb : data.total_gb;
+  const used = vramMode ? data.vram_used_gb : data.used_gb;
+  const sizeOf = (m) => (vramMode ? m.vram_gb : m.size_gb);
+  $("memTotalLabel").textContent = Math.round(total);
+  const modelsGb = data.models.reduce((sum, m) => sum + sizeOf(m), 0);
+  const otherGb = Math.max(0, used - modelsGb);
+  const otherLabel = vramMode ? "Other GPU use" : "System & apps";
+  const pct = (gb) => `${(100 * gb) / total}%`;
 
   const segs = data.models.map((m) =>
-    `<div class="mem-seg" style="width:${pct(m.size_gb)};background:${memColor(m.name)}" title="${m.label} — ${m.size_gb} GB"></div>`);
-  segs.push(`<div class="mem-seg other" style="width:${pct(otherGb)}" title="System & apps — ${otherGb.toFixed(1)} GB"></div>`);
+    `<div class="mem-seg" style="width:${pct(sizeOf(m))};background:${memColor(m.name)}" title="${m.label} — ${sizeOf(m)} GB"></div>`);
+  segs.push(`<div class="mem-seg other" style="width:${pct(otherGb)}" title="${otherLabel} — ${otherGb.toFixed(1)} GB"></div>`);
   $("membar").innerHTML = segs.join("");
 
   const chips = data.models.map((m) => {
     const exp = expiryText(m.expires_at);
     return `<span class="chip"><span class="dot" style="background:${memColor(m.name)}"></span>
-      <b>${m.label}</b> ${m.size_gb} GB · ${m.source}${exp ? ` <span class="expiry">· ${exp}</span>` : ""}</span>`;
+      <b>${m.label}</b> ${sizeOf(m)} GB · ${m.source}${exp ? ` <span class="expiry">· ${exp}</span>` : ""}</span>`;
   });
-  chips.push(`<span class="chip"><span class="dot" style="background:rgba(255,255,255,0.16)"></span>System &amp; apps ${otherGb.toFixed(1)} GB</span>`);
-  chips.push(`<span class="chip"><span class="dot" style="background:rgba(255,255,255,0.04)"></span>Free ${(data.total_gb - data.used_gb).toFixed(1)} GB</span>`);
+  chips.push(`<span class="chip"><span class="dot" style="background:rgba(255,255,255,0.16)"></span>${otherLabel} ${otherGb.toFixed(1)} GB</span>`);
+  chips.push(`<span class="chip"><span class="dot" style="background:rgba(255,255,255,0.04)"></span>Free ${Math.max(0, total - used).toFixed(1)} GB</span>`);
   $("memLegend").innerHTML = chips.join("") + (data.models.length ? "" :
     `<span class="mem-empty">No AI models loaded yet — run a Chat or Image demo and watch them appear here.</span>`);
 }

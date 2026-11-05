@@ -62,7 +62,7 @@
       <div class="spark-wrap"><canvas class="spark" id="s-gpu" aria-label="GPU utilization sparkline"></canvas></div>
     </div>
     <div class="tile" data-metric="mem">
-      <div class="tile-head"><span class="dot" style="background:var(--c-mem)"></span>Memory</div>
+      <div class="tile-head"><span class="dot" style="background:var(--c-mem)"></span><span id="t-mem">Memory</span></div>
       <div class="tile-value"><span id="v-mem">–</span><span class="unit">/ <span id="v-memtotal">128</span> GB</span></div>
       <div class="spark-wrap"><canvas class="spark" id="s-mem" aria-label="Memory usage sparkline"></canvas></div>
     </div>
@@ -99,8 +99,8 @@
       </div>
 
       <div class="panel mem-panel">
-        <div class="panel-title">Loaded AI models — memory use
-          <span class="panel-unit">tracked models and system use · <span id="memTotalLabel">—</span> GB total</span>
+        <div class="panel-title"><span id="memPanelTitle">Loaded AI models — memory use</span>
+          <span class="panel-unit"><span id="memPanelSub">tracked models and system use</span> · <span id="memTotalLabel">—</span> GB total</span>
         </div>
         <div class="membar" id="membar" role="img" aria-label="Memory use by loaded model"></div>
         <div class="mem-legend" id="memLegend"></div>
@@ -112,7 +112,7 @@
         <div class="chart-wrap"><canvas id="chart-gpu"></canvas></div>
       </div>
       <div class="panel">
-        <div class="panel-title">Memory in use <span class="panel-unit">GB</span></div>
+        <div class="panel-title"><span id="chartMemTitle">Memory in use</span> <span class="panel-unit">GB</span></div>
         <div class="chart-wrap"><canvas id="chart-mem"></canvas></div>
       </div>
       <div class="panel">

@@ -122,6 +122,7 @@ async def memory_view():
                     "name": m["name"],
                     "label": label,
                     "size_gb": round(m["size"] / 2**30, 1),
+                    "vram_gb": round(m.get("size_vram", 0) / 2**30, 1),
                     "source": "Ollama",
                     "expires_at": m.get("expires_at"),
                 })
@@ -131,9 +132,12 @@ async def memory_view():
     if sdxl_gb:
         models.append({
             "name": "sdxl", "label": "Stable Diffusion XL",
-            "size_gb": sdxl_gb, "source": "Image Studio", "expires_at": None,
+            "size_gb": sdxl_gb, "vram_gb": sdxl_gb, "source": "Image Studio", "expires_at": None,
         })
+    vram = telemetry.vram_gb()
     return {
+        "vram_used_gb": vram[0] if vram else None,
+        "vram_total_gb": vram[1] if vram else None,
         "total_gb": round(mem.total / 2**30, 1),
         "used_gb": round((mem.total - mem.available) / 2**30, 1),
         "models": models,

@@ -53,6 +53,16 @@ def _gpu_sample() -> dict:
             "vram_used_gb": vram_used, "vram_total_gb": vram_total}
 
 
+def vram_gb() -> tuple[float, float] | None:
+    """(used, total) dedicated GPU memory in GB; None when NVML can't report it (e.g. unified memory)."""
+    if not NVML_OK:
+        return None
+    sample = _gpu_sample()
+    if sample.get("vram_used_gb") is None:
+        return None
+    return sample["vram_used_gb"], sample["vram_total_gb"]
+
+
 def _sample() -> dict:
     mem = psutil.virtual_memory()
     sample = {
