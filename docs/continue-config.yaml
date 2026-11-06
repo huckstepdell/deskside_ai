@@ -9,7 +9,7 @@ models:
   - name: Chat - GB10 Gemma 4 26B
     provider: openai
     model: gb10/gemma4:26b-a4b-it-qat
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -25,7 +25,7 @@ models:
   - name: Chat - Blackwell 4K Gemma 4 12B
     provider: openai
     model: blackwell4000/gemma4:12b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -36,12 +36,12 @@ models:
     defaultCompletionOptions:
       contextLength: 32768
       temperature: 0.2
-      maxTokens: 6144
+      maxTokens: 4096
 
   - name: Chat - RTX 4070 Gemma 4 12B
     provider: openai
     model: rtx4070/gemma4:12b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -52,13 +52,13 @@ models:
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 4096
+      maxTokens: 3072
 
   # GB10 models (64K server context)
   - name: Chat - GB10 Nemotron 3.5 Lightning
     provider: openai
     model: gb10/nemotron-3.5-lightning:30b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     roles:
       - chat
       - edit
@@ -71,7 +71,7 @@ models:
   - name: Code - GB10 Qwen 3.8 27B
     provider: openai
     model: gb10/qwen3.8:27b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     roles:
       - chat
       - edit
@@ -84,7 +84,7 @@ models:
   - name: Fast - GB10 Gemma 4 E4B
     provider: openai
     model: gb10/gemma4:e4b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -99,7 +99,7 @@ models:
   - name: Code - Blackwell 4K Nemotron 3.5 Bolt E4B Q8
     provider: openai
     model: blackwell4000/nemotron-3.5-bolt:e4b-q8_0
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -110,12 +110,12 @@ models:
     defaultCompletionOptions:
       contextLength: 32768
       temperature: 0.2
-      maxTokens: 12288
+      maxTokens: 4096
 
   - name: Fast - Blackwell 4K Nemotron 3.5 Bolt E4B
     provider: openai
     model: blackwell4000/nemotron-3.5-bolt:e4b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -124,23 +124,23 @@ models:
     defaultCompletionOptions:
       contextLength: 32768
       temperature: 0.2
-      maxTokens: 12288
+      maxTokens: 4096
 
   - name: Chat - Blackwell 4K Nemotron 3.5 Lightning
     provider: openai
     model: blackwell4000/nemotron-3.5-lightning:30b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     roles:
       - chat
     defaultCompletionOptions:
       contextLength: 32768
       temperature: 0.2
-      maxTokens: 12288
+      maxTokens: 4096
 
   - name: Reasoning - Blackwell 4K Qwen 3.5 9B
     provider: openai
     model: blackwell4000/qwen3.5:9b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -149,7 +149,7 @@ models:
     defaultCompletionOptions:
       contextLength: 32768
       temperature: 0.2
-      maxTokens: 12288
+      maxTokens: 4096
 
   # FIM runs on a dedicated always-loaded Ollama (the `fim` service in compose.node.yml, port 11436) so chat
   # model swaps on 11435 never evict it. keepAlive -1 matches that instance's setting.
@@ -183,7 +183,7 @@ models:
   - name: Code - RTX 4070 Qwen 2.5 Coder 7B
     provider: openai
     model: rtx4070/qwen2.5-coder:7b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
     roles:
@@ -193,12 +193,12 @@ models:
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 4096
+      maxTokens: 3072
 
   - name: Reasoning - RTX 4070 Qwen 3.5 4B
     provider: openai
     model: rtx4070/qwen3.5:4b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -207,12 +207,12 @@ models:
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 6144
+      maxTokens: 3072
 
   - name: Fast - RTX 4070 Qwen 3.5 2B
     provider: openai
     model: rtx4070/qwen3.5:2b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -221,12 +221,12 @@ models:
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 4096
+      maxTokens: 3072
 
   - name: Fast - RTX 4070 Gemma 4 E4B
     provider: openai
     model: rtx4070/gemma4:e4b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
       - image_input
@@ -235,12 +235,12 @@ models:
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 4096
+      maxTokens: 3072
 
   - name: Fast - RTX 4070 LFM3 1.7B
     provider: openai
     model: rtx4070/lfm3:1.7b
-    apiBase: http://aperture/v1
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
     roles:
@@ -248,4 +248,4 @@ models:
     defaultCompletionOptions:
       contextLength: 16384
       temperature: 0.2
-      maxTokens: 4096
+      maxTokens: 3072

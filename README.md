@@ -63,6 +63,15 @@ OLLAMA_URL=http://pro-max-plus:11435 TELEMETRY_URL=http://pro-max-plus:9101 dock
 - Remote nodes skip the dashboard's local memory guard and measured-load figures, which read
   the dashboard machine's `/proc`. Aperture isn't involved: the dashboard needs Ollama's native API.
 
+### VS Code Copilot models
+
+The [Copilot Custom Endpoint configuration](docs/copilot-chatLanguageModels.json) connects
+VS Code to the fleet through Aperture. Add its provider entry to your VS Code user
+`chatLanguageModels.json` (via **Chat: Manage Language Models** and **Add Models** >
+**Custom Endpoint**), preserving any existing providers. Update the endpoint URLs if
+your Aperture host differs. `not-needed` is a placeholder for this gateway, not an API key;
+store any real credentials in VS Code's secret storage rather than in this file.
+
 ## The pages
 
 | Page | What it shows | The talking point |
