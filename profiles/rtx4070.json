@@ -8,11 +8,10 @@
     "chat_default": "gemma4:12b"
   },
   "pull": [
-    "gemma4:12b",
     "gemma4:e4b",
-    "qwen3.5:4b",
-    "qwen3.5:2b",
     "qwen2.5-coder:7b",
+    "qwen2.5:3b",
+    "deepseek-coder:1.3b",
     "lfm3:1.7b",
     "nomic-embed-text"
   ],
@@ -20,9 +19,9 @@
     "OLLAMA_MAX_LOADED_MODELS": "1",
     "OLLAMA_NUM_PARALLEL": "1",
     "OLLAMA_KEEP_ALIVE": "10m",
-    "OLLAMA_CONTEXT_LENGTH": "16384",
+    "OLLAMA_CONTEXT_LENGTH": "8192",
     "OLLAMA_FLASH_ATTENTION": "1",
-    "OLLAMA_KV_CACHE_TYPE": "q8_0",
+    "OLLAMA_KV_CACHE_TYPE": "q4_0",
     "OLLAMA_GPU_OVERHEAD": "536870912"
   }
 }

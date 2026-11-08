@@ -2,13 +2,14 @@ name: Dell Main Models
 version: 0.0.2
 schema: v1
 
-# contextLength matches each server's OLLAMA_CONTEXT_LENGTH (profiles/*.json: GB10 64K, Blackwell 32K, 4070 16K);
+# contextLength is bounded by the server's OLLAMA_CONTEXT_LENGTH (GB10 64K, Blackwell 16K, 4070 8K)
+# and the model's context limit (GB10 Qwen 2.5 Coder 32B: 32K);
 # maxTokens is kept well under it so the prompt still has room.
 models:
   # Default chat models: Gemma 4 (vision). The first entry is Continue's default.
   - name: Chat - GB10 Gemma 4 26B
     provider: openai
-    model: gb10/gemma4:26b-a4b-it-qat
+    model: gb10/gemma4:26b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
@@ -34,23 +35,22 @@ models:
       - edit
       - apply
     defaultCompletionOptions:
-      contextLength: 32768
+      contextLength: 16384
       temperature: 0.2
       maxTokens: 4096
 
-  - name: Chat - RTX 4070 Gemma 4 12B
+  - name: Code - RTX 4070 Qwen 2.5 Coder 7B
     provider: openai
-    model: rtx4070/gemma4:12b
+    model: rtx4070/qwen2.5-coder:7b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
-      - image_input
     roles:
       - chat
       - edit
       - apply
     defaultCompletionOptions:
-      contextLength: 16384
+      contextLength: 8192
       temperature: 0.2
       maxTokens: 3072
 
@@ -59,6 +59,8 @@ models:
     provider: openai
     model: gb10/nemotron-3.5-lightning:30b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
+    capabilities:
+      - tool_use
     roles:
       - chat
       - edit
@@ -68,47 +70,50 @@ models:
       temperature: 0.2
       maxTokens: 16384
 
-  - name: Code - GB10 Qwen 3.8 27B
+  - name: Code - GB10 Qwen 2.5 Coder 32B
     provider: openai
-    model: gb10/qwen3.8:27b
-    apiBase: https://aperture.turtle-squeaker.ts.net/v1
-    roles:
-      - chat
-      - edit
-      - apply
-    defaultCompletionOptions:
-      contextLength: 65536
-      temperature: 0.2
-      maxTokens: 12288
-
-  - name: Fast - GB10 Gemma 4 E4B
-    provider: openai
-    model: gb10/gemma4:e4b
+    model: gb10/qwen2.5-coder:32b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
-      - image_input
-    roles:
-      - chat
-    defaultCompletionOptions:
-      contextLength: 65536
-      temperature: 0.2
-      maxTokens: 8192
-
-  # Blackwell models (32K server context)
-  - name: Code - Blackwell 4K Nemotron 3.5 Bolt E4B Q8
-    provider: openai
-    model: blackwell4000/nemotron-3.5-bolt:e4b-q8_0
-    apiBase: https://aperture.turtle-squeaker.ts.net/v1
-    capabilities:
-      - tool_use
-      - image_input
     roles:
       - chat
       - edit
       - apply
     defaultCompletionOptions:
       contextLength: 32768
+      temperature: 0.2
+      maxTokens: 8192
+
+  - name: Chat - GB10 Gemma 4 9B
+    provider: openai
+    model: gb10/gemma4:9b
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
+    capabilities:
+      - tool_use
+      - image_input
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 65536
+      temperature: 0.2
+      maxTokens: 8192
+
+  # Blackwell models (16K server context)
+  - name: Code - Blackwell 4K Qwen 2.5 Coder 14B
+    provider: openai
+    model: blackwell4000/qwen2.5-coder:14b
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
+    capabilities:
+      - tool_use
+    roles:
+      - chat
+      - edit
+      - apply
+    defaultCompletionOptions:
+      contextLength: 16384
       temperature: 0.2
       maxTokens: 4096
 
@@ -122,32 +127,20 @@ models:
     roles:
       - chat
     defaultCompletionOptions:
-      contextLength: 32768
+      contextLength: 16384
       temperature: 0.2
       maxTokens: 4096
 
-  - name: Chat - Blackwell 4K Nemotron 3.5 Lightning
+  - name: Code - Blackwell 4K DeepSeek Coder V2 Lite
     provider: openai
-    model: blackwell4000/nemotron-3.5-lightning:30b
+    model: blackwell4000/deepseek-coder-v2-lite
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     roles:
       - chat
+      - edit
+      - apply
     defaultCompletionOptions:
-      contextLength: 32768
-      temperature: 0.2
-      maxTokens: 4096
-
-  - name: Reasoning - Blackwell 4K Qwen 3.5 9B
-    provider: openai
-    model: blackwell4000/qwen3.5:9b
-    apiBase: https://aperture.turtle-squeaker.ts.net/v1
-    capabilities:
-      - tool_use
-      - image_input
-    roles:
-      - chat
-    defaultCompletionOptions:
-      contextLength: 32768
+      contextLength: 16384
       temperature: 0.2
       maxTokens: 4096
 
@@ -179,47 +172,30 @@ models:
       maxPromptTokens: 1024
       onlyMyCode: true
 
-  # RTX 4070 models (16K server context)
-  - name: Code - RTX 4070 Qwen 2.5 Coder 7B
+  # RTX 4070 models (8K server context)
+  - name: Chat - RTX 4070 Qwen 2.5 3B
     provider: openai
-    model: rtx4070/qwen2.5-coder:7b
+    model: rtx4070/qwen2.5:3b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
+    roles:
+      - chat
+    defaultCompletionOptions:
+      contextLength: 8192
+      temperature: 0.2
+      maxTokens: 3072
+
+  - name: Code - RTX 4070 DeepSeek Coder 1.3B
+    provider: openai
+    model: rtx4070/deepseek-coder:1.3b
+    apiBase: https://aperture.turtle-squeaker.ts.net/v1
     roles:
       - chat
       - edit
       - apply
     defaultCompletionOptions:
-      contextLength: 16384
-      temperature: 0.2
-      maxTokens: 3072
-
-  - name: Reasoning - RTX 4070 Qwen 3.5 4B
-    provider: openai
-    model: rtx4070/qwen3.5:4b
-    apiBase: https://aperture.turtle-squeaker.ts.net/v1
-    capabilities:
-      - tool_use
-      - image_input
-    roles:
-      - chat
-    defaultCompletionOptions:
-      contextLength: 16384
-      temperature: 0.2
-      maxTokens: 3072
-
-  - name: Fast - RTX 4070 Qwen 3.5 2B
-    provider: openai
-    model: rtx4070/qwen3.5:2b
-    apiBase: https://aperture.turtle-squeaker.ts.net/v1
-    capabilities:
-      - tool_use
-      - image_input
-    roles:
-      - chat
-    defaultCompletionOptions:
-      contextLength: 16384
+      contextLength: 8192
       temperature: 0.2
       maxTokens: 3072
 
@@ -233,7 +209,7 @@ models:
     roles:
       - chat
     defaultCompletionOptions:
-      contextLength: 16384
+      contextLength: 8192
       temperature: 0.2
       maxTokens: 3072
 
@@ -246,6 +222,6 @@ models:
     roles:
       - chat
     defaultCompletionOptions:
-      contextLength: 16384
+      contextLength: 8192
       temperature: 0.2
       maxTokens: 3072

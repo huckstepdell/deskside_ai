@@ -72,6 +72,14 @@ VS Code to the fleet through Aperture. Add its provider entry to your VS Code us
 your Aperture host differs. `not-needed` is a placeholder for this gateway, not an API key;
 store any real credentials in VS Code's secret storage rather than in this file.
 
+The [Aperture gateway configuration](docs/aperture-config.hujson),
+[Continue configuration](docs/continue-config.yaml), and
+[OAI Copilot configuration](docs/oaicopilot-config.json) are separate templates; apply
+them in their respective applications after updating the node profiles. The Blackwell
+and RTX 4070 chat entries use the profiles' 16K and 8K Ollama contexts. Copilot's
+`maxInputTokens` reserves space for `maxOutputTokens` within those limits. Continue's
+autocomplete entries use the separate FIM service on port 11436.
+
 ## The pages
 
 | Page | What it shows | The talking point |
