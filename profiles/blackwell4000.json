@@ -11,7 +11,7 @@
     "gemma4:12b",
     "qwen2.5-coder:14b",
     "nemotron-3.5-bolt:e4b",
-    "deepseek-coder-v2-lite",
+    "deepseek-coder-v2:16b-lite-instruct-q8_0",
     "nomic-embed-text"
   ],
   "env": {

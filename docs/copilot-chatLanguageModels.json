@@ -86,7 +86,7 @@
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "blackwell4000/deepseek-coder-v2-lite",
+        "id": "blackwell4000/deepseek-coder-v2:16b-lite-instruct-q8_0",
         "name": "Code - Blackwell 4K DeepSeek Coder V2 Lite",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": false,

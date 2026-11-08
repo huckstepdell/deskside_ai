@@ -107,7 +107,7 @@
       "max_completion_tokens": 4096
     },
     {
-      "id": "blackwell4000/deepseek-coder-v2-lite",
+      "id": "blackwell4000/deepseek-coder-v2:16b-lite-instruct-q8_0",
       "owned_by": "Aperture",
       "displayName": "Code - Blackwell 4K DeepSeek Coder V2 Lite",
       "configId": "blackwell4000-deepseek-coder-v2-lite",
