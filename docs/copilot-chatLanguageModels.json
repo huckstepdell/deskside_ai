@@ -11,7 +11,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 32768,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -21,7 +21,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 57344,
+        "maxInputTokens": 65536,
         "maxOutputTokens": 8192,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -31,7 +31,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 13312,
+        "maxInputTokens": 16384,
         "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -41,7 +41,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 49152,
+        "maxInputTokens": 65536,
         "maxOutputTokens": 16384,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -51,7 +51,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 53248,
+        "maxInputTokens": 65536,
         "maxOutputTokens": 12288,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -61,7 +61,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 57344,
+        "maxInputTokens": 65536,
         "maxOutputTokens": 8192,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -71,7 +71,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 32768,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -81,7 +81,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 32768,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -91,7 +91,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 32768,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -101,7 +101,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 32768,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -111,7 +111,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 13312,
+        "maxInputTokens": 16384,
         "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -121,7 +121,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 13312,
+        "maxInputTokens": 16384,
         "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -131,7 +131,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 13312,
+        "maxInputTokens": 16384,
         "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -141,7 +141,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
-        "maxInputTokens": 13312,
+        "maxInputTokens": 16384,
         "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       },
@@ -151,7 +151,7 @@
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 13312,
+        "maxInputTokens": 16384,
         "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       }
