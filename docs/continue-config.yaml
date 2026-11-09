@@ -133,7 +133,7 @@ models:
 
   - name: Code - Blackwell 4K DeepSeek Coder V2 Lite
     provider: openai
-    model: blackwell4000/deepseek-coder-v2:16b-lite-instruct-q8_0
+    model: blackwell4000/deepseek-coder-v2:16b-lite-instruct
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     roles:
       - chat

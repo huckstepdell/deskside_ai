@@ -15,7 +15,7 @@
 				"gemma4:12b",
 				"qwen2.5-coder:14b",
 				"nemotron-3.5-bolt:e4b",
-				"deepseek-coder-v2:16b-lite-instruct-q8_0",
+				"deepseek-coder-v2:16b-lite-instruct",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -143,7 +143,7 @@
 			"max_output_tokens":     4096,
 		},
 		{
-			"model":                 "blackwell4000/deepseek-coder-v2:16b-lite-instruct-q8_0",
+			"model":                 "blackwell4000/deepseek-coder-v2:16b-lite-instruct",
 			"display_name":          "Code - Blackwell 4K DeepSeek Coder V2 Lite",
 			"priority":              -53,
 			"context_window_tokens": 16384,
