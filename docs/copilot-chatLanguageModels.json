@@ -86,10 +86,10 @@
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "blackwell4000/deepseek-coder-v2:16b-lite-instruct",
-        "name": "Code - Blackwell 4K DeepSeek Coder V2 Lite",
+        "id": "blackwell4000/llama3.1:8b",
+        "name": "Code - Blackwell 4K Llama 3.1 8B",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": false,
+        "toolCalling": true,
         "vision": false,
         "maxInputTokens": 12288,
         "maxOutputTokens": 4096,
@@ -106,10 +106,10 @@
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "rtx4070/deepseek-coder:1.3b",
-        "name": "Code - RTX 4070 DeepSeek Coder 1.3B",
+        "id": "rtx4070/llama3.2:3b",
+        "name": "Code - RTX 4070 Llama 3.2 3B",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": false,
+        "toolCalling": true,
         "vision": false,
         "maxInputTokens": 5120,
         "maxOutputTokens": 3072,

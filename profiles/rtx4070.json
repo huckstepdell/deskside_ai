@@ -11,7 +11,7 @@
     "gemma4:e4b",
     "qwen2.5-coder:7b",
     "qwen2.5:3b",
-    "deepseek-coder:1.3b",
+    "llama3.2:3b",
     "lfm3:1.7b",
     "nomic-embed-text"
   ],

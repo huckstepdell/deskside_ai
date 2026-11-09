@@ -107,10 +107,10 @@
       "max_completion_tokens": 4096
     },
     {
-      "id": "blackwell4000/deepseek-coder-v2:16b-lite-instruct",
+      "id": "blackwell4000/llama3.1:8b",
       "owned_by": "Aperture",
-      "displayName": "Code - Blackwell 4K DeepSeek Coder V2 Lite",
-      "configId": "blackwell4000-deepseek-coder-v2-lite",
+      "displayName": "Code - Blackwell 4K Llama 3.1 8B",
+      "configId": "blackwell4000-llama31-8b",
       "baseUrl": "https://aperture.turtle-squeaker.ts.net/v1",
       "context_length": 16384,
       "apiMode": "openai",
@@ -129,10 +129,10 @@
       "max_completion_tokens": 3072
     },
     {
-      "id": "rtx4070/deepseek-coder:1.3b",
+      "id": "rtx4070/llama3.2:3b",
       "owned_by": "Aperture",
-      "displayName": "Code - RTX 4070 DeepSeek Coder 1.3B",
-      "configId": "rtx4070-deepseek-coder-1-3b",
+      "displayName": "Code - RTX 4070 Llama 3.2 3B",
+      "configId": "rtx4070-llama32-3b",
       "baseUrl": "https://aperture.turtle-squeaker.ts.net/v1",
       "context_length": 8192,
       "apiMode": "openai",

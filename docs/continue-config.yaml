@@ -131,10 +131,12 @@ models:
       temperature: 0.2
       maxTokens: 4096
 
-  - name: Code - Blackwell 4K DeepSeek Coder V2 Lite
+  - name: Code - Blackwell 4K Llama 3.1 8B
     provider: openai
-    model: blackwell4000/deepseek-coder-v2:16b-lite-instruct
+    model: blackwell4000/llama3.1:8b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
+    capabilities:
+      - tool_use
     roles:
       - chat
       - edit
@@ -186,10 +188,12 @@ models:
       temperature: 0.2
       maxTokens: 3072
 
-  - name: Code - RTX 4070 DeepSeek Coder 1.3B
+  - name: Code - RTX 4070 Llama 3.2 3B
     provider: openai
-    model: rtx4070/deepseek-coder:1.3b
+    model: rtx4070/llama3.2:3b
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
+    capabilities:
+      - tool_use
     roles:
       - chat
       - edit
