@@ -1,19 +1,20 @@
 {
-  "_comment": "GB10: 128GB unified memory. vLLM serving Muse Glimmer 30B (multimodal reasoning + tool calling) at 64K context.",
+  "_comment": "GB10: 128GB unified memory. vLLM serving Muse Glimmer 30B NVFP4 (native Blackwell FP4 Tensor Cores) at 64K context with ~70GB left free for OS/SDXL.",
   "roles": {
-    "workhorse": "meta-models/Muse-Glimmer-30B",
-    "vision": "meta-models/Muse-Glimmer-30B",
-    "fast": "meta-models/Muse-Glimmer-30B",
-    "reasoner": "meta-models/Muse-Glimmer-30B",
-    "chat_default": "meta-models/Muse-Glimmer-30B",
+    "workhorse": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "vision": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "fast": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "reasoner": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "chat_default": "nvidia/Muse-Glimmer-30B-NVFP4",
     "embed": "BAAI/bge-small-en-v1.5"
   },
   "env": {
-    "VLLM_MODEL": "meta-models/Muse-Glimmer-30B",
+    "VLLM_MODEL": "nvidia/Muse-Glimmer-30B-NVFP4",
     "VLLM_MAX_MODEL_LEN": "65536",
-    "VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+    "VLLM_GPU_MEMORY_UTILIZATION": "0.45",
     "VLLM_KV_CACHE_DTYPE": "fp8",
     "VLLM_MAX_NUM_SEQS": "8",
-    "VLLM_TOOL_CALL_PARSER": "hermes"
+    "VLLM_REASONING_PARSER": "muse_glimmer",
+    "VLLM_TOOL_CALL_PARSER": "muse_glimmer"
   }
 }
