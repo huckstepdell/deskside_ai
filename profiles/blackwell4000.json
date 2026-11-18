@@ -1,5 +1,5 @@
 {
-  "_comment": "16GB Blackwell 4000: vLLM serving NVFP4 (native Blackwell FP4 Tensor Cores, auto-detected from checkpoint) at 16K context.",
+  "_comment": "16GB Blackwell 4000: vLLM serving NVFP4 (native Blackwell FP4 Tensor Cores, auto-detected from checkpoint) at 32K context.",
   "roles": {
     "workhorse": "nvidia/Qwen3-14B-NVFP4",
     "vision": "nvidia/Qwen3-14B-NVFP4",
@@ -10,8 +10,8 @@
   },
   "env": {
     "VLLM_MODEL": "nvidia/Qwen3-14B-NVFP4",
-    "VLLM_MAX_MODEL_LEN": "16384",
-    "VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+    "VLLM_MAX_MODEL_LEN": "32768",
+    "VLLM_GPU_MEMORY_UTILIZATION": "0.90",
     "VLLM_KV_CACHE_DTYPE": "fp8",
     "VLLM_MAX_NUM_SEQS": "4",
     "VLLM_REASONING_PARSER": "qwen3",

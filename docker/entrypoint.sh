@@ -53,7 +53,13 @@ if [[ "$MODE" != "ui" ]]; then
     VLLM_ARGS+=("${EXTRA_ARR[@]}")
   fi
 
-  vllm serve "${VLLM_ARGS[@]}" &
+  env \
+    -u VLLM_MODEL -u VLLM_MAX_MODEL_LEN -u VLLM_GPU_MEMORY_UTILIZATION \
+    -u VLLM_KV_CACHE_DTYPE -u VLLM_DTYPE -u VLLM_MAX_NUM_SEQS \
+    -u VLLM_QUANTIZATION -u VLLM_TENSOR_PARALLEL_SIZE \
+    -u VLLM_REASONING_PARSER -u VLLM_TOOL_CALL_PARSER \
+    -u VLLM_ENFORCE_EAGER -u VLLM_EXTRA_ARGS -u VLLM_HOST -u VLLM_PORT \
+    vllm serve "${VLLM_ARGS[@]}" &
   PIDS+=($!)
 fi
 
