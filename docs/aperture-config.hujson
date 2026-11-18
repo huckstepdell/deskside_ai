@@ -10,12 +10,9 @@
 			"disabled": true,
 		},
 		"blackwell4000": {
-			"baseurl": "http://pro-max-plus:11435",
+			"baseurl": "http://pro-max-plus:8000",
 			"models": [
-				"gemma4:12b",
-				"qwen2.5-coder:14b",
-				"nemotron-3.5-bolt:e4b",
-				"deepseek-coder-v2:16b-lite-instruct-q8_0",
+				"nvidia/Qwen3-14B-NVFP4",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -26,13 +23,9 @@
 			"auth_mode": "none",
 		},
 		"rtx4070": {
-			"baseurl": "http://aipc:11435",
+			"baseurl": "http://aipc:8000",
 			"models": [
-				"gemma4:e4b",
-				"qwen2.5:3b",
-				"qwen2.5-coder:7b",
-				"deepseek-coder:1.3b",
-				"lfm3:1.7b",
+				"Qwen/Qwen2.5-7B-Instruct-AWQ",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -43,12 +36,9 @@
 			"auth_mode": "none",
 		},
 		"gb10": {
-			"baseurl": "http://100.94.55.35:11435",
+			"baseurl": "http://100.94.55.35:8000",
 			"models": [
-				"nemotron-3.5-lightning:30b",
-				"qwen2.5-coder:32b",
-				"gemma4:26b",
-				"gemma4:9b",
+				"meta-models/Muse-Glimmer-30B",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -84,96 +74,26 @@
 	},
 
 	"chat_models": [
-		// Default chat models: Gemma 4 (vision). Higher priority sorts first in the picker.
+		// Default chat models. Higher priority sorts first in the picker.
 		{
-			"model":                 "gb10/gemma4:26b",
-			"display_name":          "Chat - GB10 Gemma 4 26B",
+			"model":                 "gb10/meta-models/Muse-Glimmer-30B",
+			"display_name":          "Chat - GB10 Muse Glimmer 30B",
 			"priority":              100,
 			"title_gen":             true,
 			"context_window_tokens": 65536,
 			"max_output_tokens":     8192,
 		},
 		{
-			"model":                 "blackwell4000/gemma4:12b",
-			"display_name":          "Chat - Blackwell 4K Gemma 4 12B",
+			"model":                 "blackwell4000/nvidia/Qwen3-14B-NVFP4",
+			"display_name":          "Chat - Blackwell 4K Qwen 3 14B (NVFP4)",
 			"priority":              99,
 			"context_window_tokens": 16384,
 			"max_output_tokens":     4096,
 		},
 		{
-			"model":                 "rtx4070/qwen2.5-coder:7b",
-			"display_name":          "Code - RTX 4070 Qwen 2.5 Coder 7B",
+			"model":                 "rtx4070/Qwen/Qwen2.5-7B-Instruct-AWQ",
+			"display_name":          "Code - RTX 4070 Qwen 2.5 7B (AWQ)",
 			"priority":              98,
-			"context_window_tokens": 8192,
-			"max_output_tokens":     3072,
-		},
-		{
-			"model":                 "gb10/nemotron-3.5-lightning:30b",
-			"display_name":          "Chat - GB10 Nemotron 3.5 Lightning",
-			"priority":              -10,
-			"context_window_tokens": 65536,
-			"max_output_tokens":     16384,
-		},
-		{
-			"model":                 "gb10/qwen2.5-coder:32b",
-			"display_name":          "Code - GB10 Qwen 2.5 Coder 32B",
-			"priority":              -11,
-			"context_window_tokens": 32768,
-			"max_output_tokens":     8192,
-		},
-		{
-			"model":                 "gb10/gemma4:9b",
-			"display_name":          "Chat - GB10 Gemma 4 9B",
-			"priority":              -13,
-			"context_window_tokens": 65536,
-			"max_output_tokens":     8192,
-		},
-		{
-			"model":                 "blackwell4000/qwen2.5-coder:14b",
-			"display_name":          "Code - Blackwell 4K Qwen 2.5 Coder 14B",
-			"priority":              -50,
-			"context_window_tokens": 16384,
-			"max_output_tokens":     4096,
-		},
-		{
-			"model":                 "blackwell4000/nemotron-3.5-bolt:e4b",
-			"display_name":          "Fast - Blackwell 4K Nemotron 3.5 Bolt E4B",
-			"priority":              -51,
-			"context_window_tokens": 16384,
-			"max_output_tokens":     4096,
-		},
-		{
-			"model":                 "blackwell4000/deepseek-coder-v2:16b-lite-instruct-q8_0",
-			"display_name":          "Code - Blackwell 4K DeepSeek Coder V2 Lite",
-			"priority":              -53,
-			"context_window_tokens": 16384,
-			"max_output_tokens":     4096,
-		},
-		{
-			"model":                 "rtx4070/gemma4:e4b",
-			"display_name":          "Fast - RTX 4070 Gemma 4 E4B",
-			"priority":              -56,
-			"context_window_tokens": 8192,
-			"max_output_tokens":     3072,
-		},
-		{
-			"model":                 "rtx4070/qwen2.5:3b",
-			"display_name":          "Chat - RTX 4070 Qwen 2.5 3B",
-			"priority":              -57,
-			"context_window_tokens": 8192,
-			"max_output_tokens":     3072,
-		},
-		{
-			"model":                 "rtx4070/deepseek-coder:1.3b",
-			"display_name":          "Code - RTX 4070 DeepSeek Coder 1.3B",
-			"priority":              -58,
-			"context_window_tokens": 8192,
-			"max_output_tokens":     3072,
-		},
-		{
-			"model":                 "rtx4070/lfm3:1.7b",
-			"display_name":          "Fast - RTX 4070 LFM3 1.7B",
-			"priority":              -59,
 			"context_window_tokens": 8192,
 			"max_output_tokens":     3072,
 		},

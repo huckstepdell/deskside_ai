@@ -32,7 +32,9 @@ from pathlib import Path
 import httpx
 
 from . import tokens
-from .chat import OLLAMA, _loaded_models, _prepare_model, ensure_room, supports_thinking
+from .chat import (VLLM, VLLMError, _loaded_models, _prepare_model,
+                   build_chat_payload, ensure_room, iter_vllm_chat,
+                   supports_thinking)
 from .config import ROOT, role
 
 WORKSPACE = ROOT / "agent-workspace"
@@ -518,11 +520,11 @@ async def _load_with_heartbeat(client: httpx.AsyncClient, model: str):
 # ------------------------------------------------------------------ the runs
 
 async def _stream_turn(client: httpx.AsyncClient, payload: dict, step: int, final: bool = False):
-    """Stream one Ollama turn. Yields ("sse", event) as text arrives, then
+    """Stream one vLLM turn. Yields ("sse", event) as text arrives, then
     exactly one ("turn", {...}) with the assembled content, tool calls, and
     token counts — or ("error", message)."""
     content_parts: list[str] = []
-    calls: list[dict] = []
+    calls_by_idx: dict[int, dict] = {}
     streamed = 0
     settled = False
     buf: list[str] = []
@@ -532,45 +534,46 @@ async def _stream_turn(client: httpx.AsyncClient, payload: dict, step: int, fina
     kind = "report" if final else "delta"
     scrub = ThinkFilter()
     try:
-        async with client.stream("POST", f"{OLLAMA}/api/chat", json=payload) as resp:
-            if resp.status_code != 200:
-                body = (await resp.aread()).decode(errors="replace")[:300]
-                try:  # unwrap Ollama's nested error envelope
-                    err = json.loads(body).get("error", body)
-                    body = err.get("message", body) if isinstance(err, dict) else str(err)
-                except ValueError:
-                    pass
-                yield ("error", body)
-                return
-            async for line in resp.aiter_lines():
-                if not line.strip():
-                    continue
-                chunk = json.loads(line)
-                msg = chunk.get("message", {})
-                if msg.get("thinking"):
-                    streamed += 1
-                    tokens.add_pending()
-                    think_buf.append(msg["thinking"])
-                if msg.get("content"):
-                    streamed += 1
-                    tokens.add_pending()
-                    visible = scrub.feed(msg["content"])
-                    if visible:
-                        content_parts.append(visible)
-                        buf.append(visible)
-                if msg.get("tool_calls"):
-                    calls.extend(msg["tool_calls"])
-                if (buf or think_buf) and time.time() - last_emit > 0.15:
-                    last_emit = time.time()
-                    yield ("sse", _sse({"type": kind, "step": step,
-                                        "text": "".join(buf), "think": "".join(think_buf)}))
-                    buf = []
-                    think_buf = []
-                if chunk.get("done"):
-                    p_in = chunk.get("prompt_eval_count", 0)
-                    p_out = chunk.get("eval_count", streamed)
-                    tokens.settle_pending(streamed)
-                    settled = True
+        async for chunk in iter_vllm_chat(client, VLLM, payload):
+            if chunk["thinking"]:
+                streamed += 1
+                tokens.add_pending()
+                think_buf.append(chunk["thinking"])
+            if chunk["content"]:
+                streamed += 1
+                tokens.add_pending()
+                visible = scrub.feed(chunk["content"])
+                if visible:
+                    content_parts.append(visible)
+                    buf.append(visible)
+            for tc in chunk["tool_calls"]:
+                idx = tc.get("index", 0)
+                entry = calls_by_idx.setdefault(idx, {
+                    "id": tc.get("id") or f"call_{step}_{idx}",
+                    "type": "function",
+                    "function": {"name": "", "arguments": ""},
+                })
+                if tc.get("id"):
+                    entry["id"] = tc["id"]
+                fn = tc.get("function") or {}
+                if fn.get("name"):
+                    entry["function"]["name"] += fn["name"]
+                if fn.get("arguments"):
+                    entry["function"]["arguments"] += fn["arguments"]
+            if (buf or think_buf) and time.time() - last_emit > 0.15:
+                last_emit = time.time()
+                yield ("sse", _sse({"type": kind, "step": step,
+                                    "text": "".join(buf), "think": "".join(think_buf)}))
+                buf = []
+                think_buf = []
+            if chunk["usage"]:
+                p_in = chunk["usage"].get("prompt_tokens", p_in)
+                p_out = chunk["usage"].get("completion_tokens", p_out)
+        tokens.settle_pending(streamed)
+        settled = True
+    except VLLMError as e:
+        yield ("error", str(e))
+        return
     finally:
         if not settled and streamed:
             tokens.settle_pending(streamed)
@@ -582,8 +585,9 @@ async def _stream_turn(client: httpx.AsyncClient, payload: dict, step: int, fina
     if buf or think_buf:
         yield ("sse", _sse({"type": kind, "step": step,
                             "text": "".join(buf), "think": "".join(think_buf)}))
+    calls = [calls_by_idx[i] for i in sorted(calls_by_idx)]
     yield ("turn", {"content": "".join(content_parts), "calls": calls,
-                    "in": p_in, "out": p_out})
+                    "in": p_in, "out": p_out or streamed})
 
 
 async def run_generative(task_key: str, model: str, stuffed: bool = False):
@@ -623,45 +627,41 @@ async def run_generative(task_key: str, model: str, stuffed: bool = False):
         last_emit = 0.0
         scrub = ThinkFilter()
         try:
-            async with client.stream("POST", f"{OLLAMA}/api/chat",
-                                     json={"model": model, "messages": messages,
-                                           "stream": True, "think": False,
-                                           # pinned so a presenter gets the same
-                                           # answer they rehearsed with
-                                           "options": {"temperature": 0,
-                                                       "num_predict": 2000}}) as resp:
-                if resp.status_code != 200:
-                    body = (await resp.aread()).decode(errors="replace")[:300]
-                    yield _sse({"type": "error", "error": body})
-                    return
-                async for line in resp.aiter_lines():
-                    if not line.strip():
-                        continue
-                    chunk = json.loads(line)
-                    piece = chunk.get("message", {}).get("content", "")
-                    if piece:
-                        streamed += 1
-                        tokens.add_pending()
-                        buf.append(scrub.feed(piece))
-                        if time.time() - last_emit > 0.15:
-                            last_emit = time.time()
-                            yield _sse({"type": "delta", "text": "".join(buf)})
-                            buf = []
-                    if chunk.get("done"):
-                        p_in = chunk.get("prompt_eval_count", 0)
-                        p_out = chunk.get("eval_count", streamed)
-                        tokens.settle_pending(streamed)
-                        settled = True
-                        tokens.record(in_tokens=p_in, out_tokens=p_out)
-                        yield _sse({"type": "delta", "text": "".join(buf) + scrub.flush()})
-                        yield _sse({"type": "done", "mode": mode,
-                                    "steps": 1, "tool_calls": 0,
-                                    "files_pasted": n_files,
-                                    "in_tokens": p_in, "out_tokens": p_out,
-                                    "cost": _cost(p_in, p_out),
-                                    "seconds": round(time.time() - t0, 1)})
+            use_think = False if await supports_thinking(client, model) else None
+            gen_payload = build_chat_payload(
+                model, messages, stream=True,
+                options={"temperature": 0, "num_predict": 2000},
+                think=use_think,
+            )
+            p_in = p_out = 0
+            async for chunk in iter_vllm_chat(client, VLLM, gen_payload):
+                piece = chunk["content"]
+                if piece:
+                    streamed += 1
+                    tokens.add_pending()
+                    buf.append(scrub.feed(piece))
+                    if time.time() - last_emit > 0.15:
+                        last_emit = time.time()
+                        yield _sse({"type": "delta", "text": "".join(buf)})
+                        buf = []
+                if chunk["usage"]:
+                    p_in = chunk["usage"].get("prompt_tokens", p_in)
+                    p_out = chunk["usage"].get("completion_tokens", p_out)
+            p_out = p_out or streamed
+            tokens.settle_pending(streamed)
+            settled = True
+            tokens.record(in_tokens=p_in, out_tokens=p_out)
+            yield _sse({"type": "delta", "text": "".join(buf) + scrub.flush()})
+            yield _sse({"type": "done", "mode": mode,
+                        "steps": 1, "tool_calls": 0,
+                        "files_pasted": n_files,
+                        "in_tokens": p_in, "out_tokens": p_out,
+                        "cost": _cost(p_in, p_out),
+                        "seconds": round(time.time() - t0, 1)})
+        except VLLMError as e:
+            yield _sse({"type": "error", "error": str(e)})
         except httpx.HTTPError as e:
-            yield _sse({"type": "error", "error": f"Ollama unreachable: {e}"})
+            yield _sse({"type": "error", "error": f"vLLM unreachable: {e}"})
         finally:
             if not settled and streamed:
                 tokens.settle_pending(streamed)
@@ -714,16 +714,12 @@ async def run_agentic(task_key: str, model: str, reasoning: bool = False):
             while step < MAX_STEPS:
                 step += 1
                 yield _sse({"type": "step", "step": step})
-                payload = {"model": model, "messages": messages,
-                           "tools": specs, "stream": True,
-                           # Bound each turn so a model that starts narrating
-                           # its whole analysis can't run for minutes and blow
-                           # out the context it then re-sends. Keep the ceiling
-                           # generous: tool calls are emitted after the prose,
-                           # so cutting a turn short can decapitate the call.
-                           "options": {"temperature": 0, "num_predict": 2500}}
-                if can_think:
-                    payload["think"] = reasoning
+                payload = build_chat_payload(
+                    model, messages, stream=True,
+                    options={"temperature": 0, "num_predict": 2500},
+                    think=reasoning if can_think else None,
+                    tools=specs,
+                )
 
                 turn = {}
                 async for kind, data in _stream_turn(client, payload, step):
@@ -768,7 +764,7 @@ async def run_agentic(task_key: str, model: str, reasoning: bool = False):
                         continue
                     break  # nothing left to look up — time to report
 
-                messages.append({"role": "assistant", "content": content, "tool_calls": calls})
+                messages.append({"role": "assistant", "content": content or None, "tool_calls": calls})
                 for call in calls:
                     fn = call.get("function", {})
                     name = fn.get("name", "")
@@ -803,7 +799,8 @@ async def run_agentic(task_key: str, model: str, reasoning: bool = False):
                         yield _sse({"type": "finding", "step": step,
                                     "finding": findings[-1], "count": len(findings),
                                     "tally_label": label, "tally_value": value})
-                    messages.append({"role": "tool", "tool_name": name, "content": result})
+                    messages.append({"role": "tool", "tool_call_id": call.get("id") or f"call_{tool_calls}",
+                                     "name": name, "content": result})
 
             # The deliverable is its own turn: the loop gathers evidence, this
             # writes the report. Asking for both in one turn is what produces
@@ -843,10 +840,11 @@ async def run_agentic(task_key: str, model: str, reasoning: bool = False):
                 lines = "(You recorded no findings.)"
             messages.append({"role": "user", "content": REPORT_TEMPLATE.format(
                 findings=lines, tally_label=label, tally_value=value)})
-            report_payload = {"model": model, "messages": messages, "stream": True,
-                              "options": {"temperature": 0, "num_predict": 1200}}
-            if can_think:
-                report_payload["think"] = False
+            report_payload = build_chat_payload(
+                model, messages, stream=True,
+                options={"temperature": 0, "num_predict": 1200},
+                think=False if can_think else None,
+            )
             turn = {}
             async for kind, data in _stream_turn(client, report_payload, step, final=True):
                 if kind == "sse":
@@ -875,6 +873,6 @@ async def run_agentic(task_key: str, model: str, reasoning: bool = False):
                         "cost": _cost(cum_in, cum_out),
                         "seconds": round(time.time() - t0, 1)})
     except httpx.HTTPError as e:
-        yield _sse({"type": "error", "error": f"Ollama unreachable: {e}"})
+        yield _sse({"type": "error", "error": f"vLLM unreachable: {e}"})
     finally:
         _running = False

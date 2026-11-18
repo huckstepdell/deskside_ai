@@ -127,22 +127,24 @@ async def memory_view():
 
     mem = psutil.virtual_memory()
     models = []
+    vram_now = telemetry.vram_gb()
     try:
         async with httpx.AsyncClient() as client:
-            r = await client.get(f"{chat.OLLAMA}/api/ps", timeout=5)
+            r = await client.get(f"{chat.VLLM}/v1/models", timeout=5)
             r.raise_for_status()
-            for m in r.json().get("models", []):
-                meta = chat.MODEL_CATALOG.get(m["name"], {})
-                label = meta.get("label", m["name"])
-                if m["name"].startswith(chat.EMBED_MODEL):
+            for m in r.json().get("data", []):
+                mid = m["id"]
+                meta = chat.MODEL_CATALOG.get(mid, {})
+                label = meta.get("label", mid.split("/")[-1])
+                if mid == chat.EMBED_MODEL:
                     label = "Docs Q&A index (embeddings)"
                 models.append({
-                    "name": m["name"],
+                    "name": mid,
                     "label": label,
-                    "size_gb": round(m["size"] / 2**30, 1),
-                    "vram_gb": round(m.get("size_vram", 0) / 2**30, 1),
-                    "source": "Ollama",
-                    "expires_at": m.get("expires_at"),
+                    "size_gb": meta.get("size_gb", 0),
+                    "vram_gb": vram_now[0] if vram_now else 0,
+                    "source": "vLLM",
+                    "expires_at": None,
                 })
     except httpx.HTTPError:
         pass
@@ -170,19 +172,25 @@ async def memory_view():
 @app.get("/api/preflight")
 async def preflight():
     """Readiness lights for the Overview page — check before a customer call."""
-    checks = {"ollama": False, "chat_models": [], "vision_model": False, "embed_model": False}
+    checks = {"vllm": False, "ollama": False, "chat_models": [], "vision_model": False, "embed_model": False}
     try:
         async with httpx.AsyncClient() as client:
-            r = await client.get(f"{chat.OLLAMA}/api/tags", timeout=5)
+            r = await client.get(f"{chat.VLLM}/v1/models", timeout=5)
             r.raise_for_status()
-            installed = [m["name"] for m in r.json().get("models", [])]
+            installed = [m["id"] for m in r.json().get("data", [])]
+            checks["vllm"] = True
             checks["ollama"] = True
-            # every chat-capable model counts, catalog or not — a pulled model
-            # is demoable immediately, so the readiness light should say so
-            checks["chat_models"] = [m for m in installed
-                                     if not m.startswith(chat.EMBED_MODEL)]
+            checks["chat_models"] = [m for m in installed if m != chat.EMBED_MODEL]
             checks["vision_model"] = chat.VISION_MODEL in installed
-            checks["embed_model"] = any(m.startswith(chat.EMBED_MODEL) for m in installed)
+            checks["embed_model"] = chat.EMBED_MODEL in installed
+            if not checks["embed_model"] and chat.EMBED_URL != chat.VLLM:
+                try:
+                    er = await client.get(f"{chat.EMBED_URL}/v1/models", timeout=3)
+                    if er.status_code == 200:
+                        embed_ids = [m["id"] for m in er.json().get("data", [])]
+                        checks["embed_model"] = any(chat.EMBED_MODEL == m for m in embed_ids) or bool(embed_ids)
+                except httpx.HTTPError:
+                    pass
     except httpx.HTTPError:
         pass
     checks["sdxl_cached"] = imagegen.is_cached()
@@ -200,7 +208,7 @@ async def models():
     try:
         return await chat.list_models()
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Ollama unreachable: {e}")
+        raise HTTPException(502, f"vLLM unreachable: {e}")
 
 
 # ---------- Inference hosts (cross-machine comparison) ----------
@@ -214,18 +222,19 @@ async def hosts():
             entry = {"key": key, "label": cfg["label"], "local": cfg["local"],
                      "online": False, "models": []}
             try:
-                r = await client.get(f"{cfg['url']}/api/tags", timeout=4)
+                r = await client.get(f"{cfg['url']}/v1/models", timeout=4)
                 r.raise_for_status()
                 entry["online"] = True
-                for m in sorted(r.json().get("models", []), key=lambda x: x["name"]):
-                    if m["name"].startswith(chat.EMBED_MODEL):
+                for m in sorted(r.json().get("data", []), key=lambda x: x["id"]):
+                    mid = m["id"]
+                    if mid == chat.EMBED_MODEL:
                         continue
-                    meta = chat.MODEL_CATALOG.get(m["name"], {})
+                    meta = chat.MODEL_CATALOG.get(mid, {})
                     entry["models"].append({
-                        "name": m["name"],
-                        "label": meta.get("label", m["name"]),
+                        "name": mid,
+                        "label": meta.get("label", mid.split("/")[-1]),
                         "traits": meta.get("traits", ""),
-                        "size_gb": round(m["size"] / 2**30, 1),
+                        "size_gb": meta.get("size_gb", 0),
                     })
             except httpx.HTTPError:
                 pass
@@ -311,36 +320,33 @@ async def models_status():
     """Every dock-controllable model with whether it's resident right now."""
     try:
         async with httpx.AsyncClient() as client:
-            tags = (await client.get(f"{chat.OLLAMA}/api/tags", timeout=10)).json().get("models", [])
-            ps = {m["name"]: m for m in (await client.get(f"{chat.OLLAMA}/api/ps", timeout=10)).json().get("models", [])}
+            r = await client.get(f"{chat.VLLM}/v1/models", timeout=10)
+            r.raise_for_status()
+            served = {m["id"]: m for m in r.json().get("data", [])}
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Ollama unreachable: {e}")
-    installed = {m["name"]: m for m in tags}
+        raise HTTPException(502, f"vLLM unreachable: {e}")
     out = []
 
-    def row(name: str, label: str) -> dict:
+    def row(name: str, label: str, size_gb: float = 0) -> dict:
+        m = served.get(name, {})
         return {
             "name": name,
             "label": label,
-            "size_gb": round(installed[name]["size"] / 2**30, 1),
-            "loaded": name in ps,
-            "context": ps.get(name, {}).get("context_length"),
-            "expires_at": ps.get(name, {}).get("expires_at"),
+            "size_gb": size_gb,
+            "loaded": name in served,
+            "context": m.get("max_model_len"),
+            "expires_at": None,
             "busy": _dock_busy.get(name),
             "error": _dock_errors.get(name),
         }
 
-    # curated models first, in catalog order
     for name, meta in chat.MODEL_CATALOG.items():
-        if name in installed:
-            out.append(row(name, meta["label"]))
-    # then anything else pulled onto the box, so a fresh `ollama pull` is
-    # dock-controllable without a catalog edit (embeddings stay hidden —
-    # they're loaded on demand by RAG, not by the presenter)
-    for name in sorted(installed):
-        if name in chat.MODEL_CATALOG or name.startswith(chat.EMBED_MODEL):
+        if name in served:
+            out.append(row(name, meta["label"], meta.get("size_gb", 0)))
+    for name in sorted(served):
+        if name in chat.MODEL_CATALOG or name == chat.EMBED_MODEL:
             continue
-        out.append(row(name, name))
+        out.append(row(name, name.split("/")[-1]))
 
     out.append({
         "name": "sdxl",
@@ -361,19 +367,6 @@ async def _dock_load(name: str, options: dict | None = None):
             await _make_room_for_sdxl()
             await imagegen.warmup()
             return
-        async with httpx.AsyncClient(timeout=httpx.Timeout(1200, connect=10)) as client:
-            options = {k: v for k, v in (options or {}).items()
-                       if k in chat.CHAT_OPTIONS and v is not None}
-            err = await chat.ensure_room(client, name, options.get("num_ctx"))
-            if err:
-                _dock_errors[name] = err
-                return
-            # empty generate = "load into memory"; generous keep_alive since
-            # the presenter loaded it on purpose
-            body = {"model": name, "keep_alive": "30m"}
-            if options:
-                body["options"] = options
-            await chat.load_measured(client, body)
     except Exception as e:
         _dock_errors[name] = f"Load failed: {e}"
     finally:
@@ -386,10 +379,6 @@ async def _dock_unload(name: str):
             if not await asyncio.to_thread(imagegen.unload):
                 _dock_errors[name] = "SDXL is busy generating — try again when it finishes."
             return
-        async with httpx.AsyncClient() as client:
-            r = await client.post(f"{chat.OLLAMA}/api/generate",
-                                  json={"model": name, "keep_alive": 0}, timeout=60)
-            r.raise_for_status()
     except Exception as e:
         _dock_errors[name] = f"Unload failed: {e}"
     finally:
@@ -398,17 +387,15 @@ async def _dock_unload(name: str):
 
 @app.post("/api/models/load")
 async def model_load(req: ModelAction):
-    # Gate on what's actually installed rather than on the curated catalog:
-    # the dock lists freshly pulled models too, and they must be loadable.
     if req.name != "sdxl":
         try:
             async with httpx.AsyncClient() as client:
-                r = await client.get(f"{chat.OLLAMA}/api/tags", timeout=10)
+                r = await client.get(f"{chat.VLLM}/v1/models", timeout=10)
                 r.raise_for_status()
         except httpx.HTTPError as e:
-            raise HTTPException(502, f"Ollama unreachable: {e}")
-        if req.name not in {m["name"] for m in r.json().get("models", [])}:
-            raise HTTPException(404, f"Not installed: {req.name}")
+            raise HTTPException(502, f"vLLM unreachable: {e}")
+        if req.name not in {m["id"] for m in r.json().get("data", [])}:
+            raise HTTPException(404, f"Not served by vLLM: {req.name}")
     if req.name in _dock_busy:
         return {"started": False, "busy": _dock_busy[req.name]}
     _dock_errors.pop(req.name, None)
@@ -596,7 +583,7 @@ async def rag_upload(file: UploadFile):
     except ValueError as e:
         raise HTTPException(400, str(e))
     except httpx.HTTPError as e:
-        raise HTTPException(502, f"Embedding failed (Ollama): {e}")
+        raise HTTPException(502, f"Embedding failed (vLLM): {e}")
 
 
 class RagAskRequest(BaseModel):

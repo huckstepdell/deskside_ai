@@ -24,8 +24,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 # UI-only deployments point the primary host ("gb10") at a remote compute node.
-LOCAL_OLLAMA = os.environ.get("OLLAMA_URL") or "http://localhost:11434"
-PRIMARY_REMOTE = bool(os.environ.get("OLLAMA_URL"))
+LOCAL_VLLM = (os.environ.get("VLLM_URL") or os.environ.get("OLLAMA_URL") or "http://localhost:8000").rstrip("/")
+LOCAL_OLLAMA = LOCAL_VLLM
+EMBED_URL = (os.environ.get("VLLM_EMBED_URL") or LOCAL_VLLM).rstrip("/")
+PRIMARY_REMOTE = bool(os.environ.get("VLLM_URL") or os.environ.get("OLLAMA_URL"))
 PRIMARY_LABEL = os.environ.get("PRIMARY_LABEL") or ("GB10 — this box" if not PRIMARY_REMOTE else "Primary node")
 # metrics agent (server/agent.py) of the primary node, when it isn't this machine
 TELEMETRY_URL = (os.environ.get("TELEMETRY_URL") or "").rstrip("/")
@@ -59,7 +61,7 @@ ROLES: dict[str, str] = {**_models.get("roles", {}), **_clean_roles(_local.get("
 
 # The local box is always host "gb10"; companion boxes come from local config.
 HOSTS: dict[str, dict] = {
-    "gb10": {"label": PRIMARY_LABEL, "url": LOCAL_OLLAMA, "local": not PRIMARY_REMOTE,
+    "gb10": {"label": PRIMARY_LABEL, "url": LOCAL_VLLM, "local": not PRIMARY_REMOTE,
              "telemetry_url": TELEMETRY_URL or None},
 }
 for key, h in _local.get("hosts", {}).items():

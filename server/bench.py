@@ -18,7 +18,8 @@ from pathlib import Path
 import httpx
 
 from . import tokens
-from .chat import HOSTS, OLLAMA, _loaded_models, _prepare_model, supports_thinking
+from .chat import (HOSTS, VLLM, VLLMError, _loaded_models, _prepare_model,
+                   build_chat_payload, iter_vllm_chat, supports_thinking)
 
 RUNS_FILE = Path(__file__).resolve().parent.parent / "data" / "benchruns.json"
 _runs_lock = threading.Lock()
@@ -219,38 +220,35 @@ async def run(host: str, model: str, reasoning: str = "default"):
                 yield _sse({"type": "task", "index": i, "total": len(TASKS),
                             "id": task["id"], "label": task["label"],
                             "category": task["category"]})
-                payload = {"model": model, "stream": True,
-                           "messages": [{"role": "user", "content": task["prompt"]}],
-                           "options": {"temperature": 0}}
-                if use_think:
-                    payload["think"] = think
+                payload = build_chat_payload(
+                    model, [{"role": "user", "content": task["prompt"]}],
+                    stream=True, options={"temperature": 0},
+                    think=think if use_think else None,
+                )
                 streamed = 0
                 settled = False
                 content: list[str] = []
                 task_t0 = time.time()
                 try:
-                    async with client.stream("POST", f"{url}/api/chat", json=payload) as resp:
-                        if resp.status_code != 200:
-                            body = (await resp.aread()).decode(errors="replace")[:200]
-                            yield _sse({"type": "error", "error": body})
-                            return
-                        async for line in resp.aiter_lines():
-                            if not line.strip():
-                                continue
-                            chunk = json.loads(line)
-                            if chunk.get("message", {}).get("thinking"):
-                                streamed += 1
-                                tokens.add_pending()
-                            piece = chunk.get("message", {}).get("content", "")
-                            if piece:
-                                streamed += 1
-                                tokens.add_pending()
-                                content.append(piece)
-                            if chunk.get("done"):
-                                tokens.settle_pending(streamed)
-                                settled = True
-                                tokens.record(in_tokens=chunk.get("prompt_eval_count", 0),
-                                              out_tokens=chunk.get("eval_count", streamed))
+                    p_in = p_out = 0
+                    async for chunk in iter_vllm_chat(client, url, payload):
+                        if chunk["thinking"]:
+                            streamed += 1
+                            tokens.add_pending()
+                        piece = chunk["content"]
+                        if piece:
+                            streamed += 1
+                            tokens.add_pending()
+                            content.append(piece)
+                        if chunk["usage"]:
+                            p_in = chunk["usage"].get("prompt_tokens", p_in)
+                            p_out = chunk["usage"].get("completion_tokens", p_out)
+                    tokens.settle_pending(streamed)
+                    settled = True
+                    tokens.record(in_tokens=p_in, out_tokens=p_out or streamed)
+                except VLLMError as e:
+                    yield _sse({"type": "error", "error": str(e)})
+                    return
                 finally:
                     if not settled and streamed:
                         tokens.settle_pending(streamed)

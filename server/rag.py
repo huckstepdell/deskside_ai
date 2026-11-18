@@ -14,7 +14,7 @@ import numpy as np
 from pypdf import PdfReader
 
 from . import tokens
-from .chat import EMBED_MODEL, OLLAMA
+from .chat import EMBED_MODEL, EMBED_URL
 
 DOCS_DIR = Path(__file__).resolve().parent.parent / "docs"
 
@@ -40,11 +40,12 @@ def _chunk(text: str) -> list[str]:
 
 async def _embed(texts: list[str]) -> np.ndarray:
     async with httpx.AsyncClient(timeout=300) as client:
-        r = await client.post(f"{OLLAMA}/api/embed", json={"model": EMBED_MODEL, "input": texts})
+        r = await client.post(f"{EMBED_URL}/v1/embeddings", json={"model": EMBED_MODEL, "input": texts})
         r.raise_for_status()
     body = r.json()
-    tokens.record(embed_tokens=body.get("prompt_eval_count", 0))
-    vecs = np.array(body["embeddings"], dtype=np.float32)
+    tokens.record(embed_tokens=body.get("usage", {}).get("prompt_tokens", 0))
+    items = sorted(body["data"], key=lambda d: d.get("index", 0))
+    vecs = np.array([d["embedding"] for d in items], dtype=np.float32)
     return vecs / np.linalg.norm(vecs, axis=1, keepdims=True)
 
 

@@ -1,6 +1,24 @@
 {
-  "_comment": "Curated model metadata and install tiers. This is the editorial layer only — any installed Ollama model appears in the dashboard automatically; entries here add friendly labels, traits, and role/tier membership. Update via scripts/certify (Box Bench + batch sample) rather than vibes.",
+  "_comment": "Curated model metadata and install tiers. This is the editorial layer only — any model served by vLLM appears in the dashboard automatically; entries here add friendly labels, traits, and role/tier membership. Update via scripts/certify (Box Bench + batch sample) rather than vibes.",
   "catalog": {
+    "meta-models/Muse-Glimmer-30B": {
+      "label": "Muse Glimmer · 30B",
+      "blurb": "Multimodal reasoning model built for autonomous agents and tool calling",
+      "traits": "30B · vision · reasoning · tools",
+      "size_gb": 60
+    },
+    "nvidia/Qwen3-14B-NVFP4": {
+      "label": "Qwen 3 · 14B (NVFP4)",
+      "blurb": "Native Blackwell FP4 14B model — fits 16 GB VRAM with 16K context",
+      "traits": "dense 14B · NVFP4 · reasoning · tools",
+      "size_gb": 8.5
+    },
+    "Qwen/Qwen2.5-7B-Instruct-AWQ": {
+      "label": "Qwen 2.5 · 7B (AWQ)",
+      "blurb": "4-bit AWQ-Marlin 7B model — fast and light on 12 GB RTX 4070",
+      "traits": "dense 7B · AWQ · tools",
+      "size_gb": 4.5
+    },
     "qwen3.8:27b": {
       "label": "Qwen 3.8 · 27B",
       "blurb": "Newest Qwen — great all-round chat model",
@@ -93,12 +111,12 @@
     }
   },
   "roles": {
-    "workhorse": "nemotron-3.5-lightning:30b",
-    "vision": "gemma4:26b-a4b-it-qat",
-    "fast": "qwen3-coder-next:latest",
-    "reasoner": "qwen3.8:27b",
-    "chat_default": "qwen3.8:27b",
-    "embed": "nomic-embed-text"
+    "workhorse": "meta-models/Muse-Glimmer-30B",
+    "vision": "meta-models/Muse-Glimmer-30B",
+    "fast": "meta-models/Muse-Glimmer-30B",
+    "reasoner": "meta-models/Muse-Glimmer-30B",
+    "chat_default": "meta-models/Muse-Glimmer-30B",
+    "embed": "BAAI/bge-small-en-v1.5"
   },
   "tiers": {
     "essentials": [

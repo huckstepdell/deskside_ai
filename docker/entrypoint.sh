@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
-# Runs Ollama and the dashboard in one container.
-#   DEMO_MODE      all (default) | node (Ollama + metrics agent) | ui (dashboard only)
+# Runs vLLM and the dashboard (or metrics agent) in one container.
+#   DEMO_MODE      all (default) | node (vLLM + metrics agent) | ui (dashboard only)
 #   DEMO_PROFILE   gb10 | rtx4070 | blackwell4000 | none  (profiles/<name>.json)
-#   DEMO_PULL      "auto" = pull the profile's model list, "none" = skip,
-#                  or a space-separated list of model tags
+#   VLLM_MODEL     HuggingFace model ID or local path (overrides profile env)
 set -uo pipefail
 MODE="${DEMO_MODE:-all}"
 
@@ -11,11 +10,11 @@ PROFILE="${DEMO_PROFILE:-gb10}"
 if [[ -f "/app/profiles/${PROFILE}.json" ]]; then
   cp "/app/profiles/${PROFILE}.json" /app/profiles/active.json
 fi
-# Ollama limits from the profile's "env"; variables set on the container win
+# vLLM settings from the profile's "env"; variables set on the container win
 if [[ -f /app/profiles/active.json ]]; then
   while IFS='=' read -r k v; do
     [[ -n "$k" && -z "${!k:-}" ]] && export "$k=$v"
-  done < <(python -c "import json;[print(f'{k}={v}') for k,v in json.load(open('/app/profiles/active.json')).get('env',{}).items()]")
+  done < <(python3 -c "import json;[print(f'{k}={v}') for k,v in json.load(open('/app/profiles/active.json')).get('env',{}).items()]")
 fi
 # a user-mounted /app/demo-config.json (companion hosts) wins over the profile
 for f in /app/config/demo-config.json /app/demo-config.json; do [[ -f $f ]] && export DEMO_CONFIG=$f; done
@@ -24,24 +23,38 @@ PIDS=()
 trap 'kill "${PIDS[@]}" 2>/dev/null' TERM INT
 
 if [[ "$MODE" != "ui" ]]; then
-  ollama serve &
-  PIDS+=($!)
-  for _ in $(seq 1 60); do
-    curl -sf http://localhost:11434/api/version >/dev/null && break
-    sleep 1
-  done
+  if [[ -z "${VLLM_MODEL:-}" && -f /app/profiles/active.json ]]; then
+    VLLM_MODEL=$(python3 -c "import json;d=json.load(open('/app/profiles/active.json'));print(d.get('roles',{}).get('workhorse',''))" 2>/dev/null || true)
+  fi
+  VLLM_MODEL="${VLLM_MODEL:-Qwen/Qwen2.5-7B-Instruct-AWQ}"
 
-  pull_models() {
-    local models="${DEMO_PULL:-auto}"
-    [[ "$models" == "none" ]] && return
-    if [[ "$models" == "auto" ]]; then
-      models=$(python -c "import json;print(' '.join(json.load(open('/app/profiles/active.json')).get('pull',[])))" 2>/dev/null)
-    fi
-    for m in $models; do
-      ollama list | awk '{print $1}' | grep -qxe "$m" -e "$m:latest" || ollama pull "$m"
-    done
-  }
-  pull_models &
+  VLLM_ARGS=(
+    "$VLLM_MODEL"
+    --host "${VLLM_HOST:-0.0.0.0}"
+    --port "${VLLM_PORT:-8000}"
+  )
+  [[ -n "${VLLM_MAX_MODEL_LEN:-}" ]] && VLLM_ARGS+=(--max-model-len "$VLLM_MAX_MODEL_LEN")
+  [[ -n "${VLLM_GPU_MEMORY_UTILIZATION:-}" ]] && VLLM_ARGS+=(--gpu-memory-utilization "$VLLM_GPU_MEMORY_UTILIZATION")
+  [[ -n "${VLLM_KV_CACHE_DTYPE:-}" ]] && VLLM_ARGS+=(--kv-cache-dtype "$VLLM_KV_CACHE_DTYPE")
+  [[ -n "${VLLM_DTYPE:-}" ]] && VLLM_ARGS+=(--dtype "$VLLM_DTYPE")
+  [[ -n "${VLLM_MAX_NUM_SEQS:-}" ]] && VLLM_ARGS+=(--max-num-seqs "$VLLM_MAX_NUM_SEQS")
+  [[ -n "${VLLM_QUANTIZATION:-}" ]] && VLLM_ARGS+=(--quantization "$VLLM_QUANTIZATION")
+  [[ -n "${VLLM_TENSOR_PARALLEL_SIZE:-}" ]] && VLLM_ARGS+=(--tensor-parallel-size "$VLLM_TENSOR_PARALLEL_SIZE")
+  [[ -n "${VLLM_REASONING_PARSER:-}" ]] && VLLM_ARGS+=(--reasoning-parser "$VLLM_REASONING_PARSER")
+  if [[ -n "${VLLM_TOOL_CALL_PARSER:-}" ]]; then
+    VLLM_ARGS+=(--enable-auto-tool-choice --tool-call-parser "$VLLM_TOOL_CALL_PARSER")
+  fi
+  if [[ "${VLLM_ENFORCE_EAGER:-0}" == "1" || "${VLLM_ENFORCE_EAGER:-}" == "true" ]]; then
+    VLLM_ARGS+=(--enforce-eager)
+  fi
+  if [[ -n "${VLLM_EXTRA_ARGS:-}" ]]; then
+    # shellcheck disable=SC2206
+    EXTRA_ARR=($VLLM_EXTRA_ARGS)
+    VLLM_ARGS+=("${EXTRA_ARR[@]}")
+  fi
+
+  vllm serve "${VLLM_ARGS[@]}" &
+  PIDS+=($!)
 fi
 
 if [[ "$MODE" == "node" ]]; then

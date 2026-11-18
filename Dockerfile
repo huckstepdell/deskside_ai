@@ -1,4 +1,4 @@
-FROM ollama/ollama:latest
+FROM vllm/vllm-openai:latest
 
 # Image Studio pulls several GB of PyTorch wheels; opt in with INSTALL_IMAGEGEN=1.
 # NVIDIA DGX Spark playbooks are also opt-in with INSTALL_RUNBOOKS=1.
@@ -7,8 +7,9 @@ ARG INSTALL_RUNBOOKS=0
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    OLLAMA_HOST=0.0.0.0:11434 \
-    OLLAMA_LOAD_TIMEOUT=20m
+    HF_HOME=/root/.cache/huggingface \
+    VLLM_HOST=0.0.0.0 \
+    VLLM_PORT=8000
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 python3-venv curl ca-certificates openssh-client \
@@ -16,7 +17,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN python3 -m venv /opt/venv
+# Inherit vLLM, PyTorch, and CUDA packages from the base image while keeping
+# dashboard dependencies cleanly installed in /opt/venv.
+RUN python3 -m venv --system-site-packages /opt/venv
 ENV PATH=/opt/venv/bin:$PATH
 
 COPY requirements.txt requirements-imagegen.txt ./
@@ -28,10 +31,10 @@ COPY . .
 RUN chmod +x docker/entrypoint.sh
 
 ENV DEMO_CONFIG=/app/profiles/active.json
-EXPOSE 8080 9101 11434
-VOLUME ["/root/.ollama", "/app/data"]
+EXPOSE 8080 9101 8000
+VOLUME ["/root/.cache/huggingface", "/app/data"]
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
     CMD curl -sf http://localhost:8080/api/device || curl -sf http://localhost:9101/api/device || exit 1
 
 ENTRYPOINT ["/app/docker/entrypoint.sh"]

@@ -17,9 +17,9 @@ Set `INSTALL_RUNBOOKS=1` to include NVIDIA's DGX Spark playbooks in the image.
 
 ## Deploy
 
-One image (based on `ollama/ollama:latest`) runs in two roles: a compute node (`compose.node.yml`,
-Ollama plus a metrics agent) and a dashboard (`compose.ui.yml`). Pick the profile that matches
-each compute machine — it sets the model roles and what gets pulled:
+One image (based on `vllm/vllm-openai:latest`) runs in two roles: a compute node (`compose.node.yml`,
+vLLM plus a metrics agent) and a dashboard (`compose.ui.yml`). Pick the profile that matches
+each compute machine — it sets the model roles and vLLM engine settings:
 
 | Machine | Profile |
 |---|---|
@@ -29,8 +29,8 @@ each compute machine — it sets the model roles and what gets pulled:
 
 Requirements: Docker plus the NVIDIA Container Toolkit (Linux), or Docker Desktop with WSL2 GPU
 support (Windows). On the GB10, `scripts/deploy-compute.sh <profile>` and `scripts/deploy-ui.sh` build and restart the stacks without Dockhand.
-`DEMO_PULL=none` (or a space-separated tag list) skips/overrides the automatic model pull. Models
-persist in the `ollama` volume; the dashboard's state is in `./data`.
+Set `VLLM_MODEL` to override the profile's HuggingFace model ID (and `HF_TOKEN` for gated models). Models
+persist in the `huggingface` volume; the dashboard's state is in `./data`.
 
 To update, redeploy the stack in Dockhand (it pulls the latest commit and rebuilds), or on the
 GB10 run `PULL_GIT=1 scripts/deploy-compute.sh <profile>`.
@@ -41,27 +41,28 @@ With Dockhand: add each machine's stack from this Git repo (`compose.node.yml` o
 `compose.ui.yml` for the dashboard), enable build at deploy, and set the variables below in the
 stack environment. Redeploying pulls the latest commit and rebuilds.
 
-Run `compose.node.yml` on each GPU machine (Ollama plus a small metrics agent, no UI) and
+Run `compose.node.yml` on each GPU machine (vLLM plus a small metrics agent, no UI) and
 `compose.ui.yml` anywhere on the tailnet (no GPU needed):
 
 ```bash
 # on each GPU machine (BIND_IP optionally pins ports to the tailnet IP)
 DEMO_PROFILE=blackwell4000 DEVICE_NAME="Blackwell 4000" docker compose -f compose.node.yml up -d --build
 # on the dashboard machine
-OLLAMA_URL=http://pro-max-plus:11435 TELEMETRY_URL=http://pro-max-plus:9101 docker compose -f compose.ui.yml up -d --build
+VLLM_URL=http://pro-max-plus:8000 TELEMETRY_URL=http://pro-max-plus:9101 docker compose -f compose.ui.yml up -d --build
 ```
 
 - The agent (port 9101) streams the node's real GPU, CPU, memory and power to the dashboard,
   so the telemetry strip shows the node, not the UI machine. NVML works in containers via the
   NVIDIA Container Toolkit; CPU/memory are the host's on Linux. On Windows (Docker Desktop) they
   are the WSL2 VM's, so memory is capped by `.wslconfig`, not the full 128GB.
-- Each profile sets Ollama's own memory limits (`OLLAMA_MAX_LOADED_MODELS`, `OLLAMA_NUM_PARALLEL`,
-  `OLLAMA_KEEP_ALIVE`, `OLLAMA_GPU_OVERHEAD`) under `env` in `profiles/<name>.json`; Ollama's
-  scheduler then handles VRAM on the discrete-GPU nodes. Set any of them on the container to override.
+- Each profile sets vLLM's memory and serving flags (`VLLM_MODEL`, `VLLM_MAX_MODEL_LEN`,
+  `VLLM_GPU_MEMORY_UTILIZATION`, `VLLM_KV_CACHE_DTYPE`, `VLLM_QUANTIZATION`) under `env` in
+  `profiles/<name>.json`. Set any of them on the container to override.
+- Optional dedicated `embed` (port 8001) and `fim` (port 8002) vLLM services are available in
+  `compose.node.yml` via `--profile embed` and `--profile fim`. Point the dashboard at the
+  embeddings container with `VLLM_EMBED_URL=http://<host>:8001`.
 - Extra nodes go in the `DEMO_HOSTS` variable (JSON) with `url` plus optional `telemetry_url`, for
   side-by-side comparison; wattage then comes from each node's agent instead of ssh.
-- Remote nodes skip the dashboard's local memory guard and measured-load figures, which read
-  the dashboard machine's `/proc`. Aperture isn't involved: the dashboard needs Ollama's native API.
 
 ### VS Code Copilot models
 
@@ -106,7 +107,7 @@ against cloud API rates, climbing live and persisting across sessions.
 
 - **`models.json`** (tracked) — curated model catalog: labels, traits, role
   recommendations (workhorse / vision / fast / reasoner), install tiers.
-  Any installed Ollama model appears in the dashboard automatically; this
+  Any model served by vLLM appears in the dashboard automatically; this
   file only adds the polish. Vet candidates with `scripts/certify.sh`.
 - **`DEMO_HOSTS`** (stack variable; see `demo-config.example.json` for the shape) —
   companion inference hosts and role overrides.
@@ -114,8 +115,7 @@ against cloud API rates, climbing live and persisting across sessions.
 ## Architecture
 
 - `server/` — FastAPI backend: telemetry sampler (NVML + /proc → SSE),
-  streaming proxy to Ollama (local + configured companion hosts), unified-
-  memory guard (evicts idle models before loads that wouldn't fit),
+  streaming proxy to vLLM OpenAI-compatible endpoints (local + configured companion hosts),
   per-request reasoning control, in-process SDXL, in-memory RAG, structured-
   output Case Works stages, code-graded bench, token-savings ledger.
 - `static/` — vanilla JS single-page frontend; Chart.js and marked.js
@@ -138,9 +138,9 @@ against cloud API rates, climbing live and persisting across sessions.
 
 | Symptom | Fix |
 |---|---|
-| Red "AI engine" light | Check the compute node's container is running (`docker compose -f compose.node.yml ps`) and that `OLLAMA_URL` is reachable from the dashboard container |
+| Red "AI engine" light | Check the compute node's container is running (`docker compose -f compose.node.yml ps`) and that `VLLM_URL` is reachable from the dashboard container |
 | First reply slow, "Loading the model into memory…" | Normal cold load — pre-warm via the Model dock |
 | "Can't reach the demo server" | Check the dashboard container is running; restart the stack in Dockhand |
-| Companion box offline in Model Comparison | Check its Ollama is running and reachable, and that its entry in `DEMO_HOSTS` is correct |
-| Ladder mode's run button is greyed out | It needs both audited models — the page prints the `ollama pull` line to run |
+| Companion box offline in Model Comparison | Check its vLLM server is running and reachable, and that its entry in `DEMO_HOSTS` is correct |
+| Ladder mode's run button is greyed out | It needs both audited models served by vLLM |
 | Telemetry flat at zero | `nvidia-smi` to confirm the driver is up |

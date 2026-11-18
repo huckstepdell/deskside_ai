@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Certify a candidate model for the demo lineup.
 #
-#   scripts/certify.sh <ollama-tag>
+#   scripts/certify.sh <model-id>
 #
 # Runs the measurement gauntlet this repo's recommendations are based on:
 #   1. Box Bench      — 14 code-graded accuracy tasks (deterministic)
@@ -11,14 +11,15 @@
 # the model earns in models.json — the script measures, you judge.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-MODEL="${1:?usage: scripts/certify.sh <ollama-tag>}"
+MODEL="${1:?usage: scripts/certify.sh <model-id>}"
 API=http://localhost:8080
 
 curl -sf "$API/api/device" >/dev/null || { echo "Demo server not running (start the dashboard stack first)"; exit 1; }
 
-if ! ollama list | awk '{print $1}' | grep -qxe "$MODEL" -e "$MODEL:latest"; then
-  echo "==> Pulling $MODEL"
-  ollama pull "$MODEL"
+if ! curl -sf "$API/api/models" | grep -qF "\"$MODEL\""; then
+  echo "Model '$MODEL' is not currently served by vLLM on the primary node." >&2
+  echo "Start the compute node with VLLM_MODEL=$MODEL first." >&2
+  exit 1
 fi
 
 echo "==> [1/3] Box Bench (accuracy, deterministic)"

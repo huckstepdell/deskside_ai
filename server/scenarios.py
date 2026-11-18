@@ -17,7 +17,8 @@ import time
 import httpx
 
 from . import tokens
-from .chat import OLLAMA, ensure_room, supports_thinking
+from .chat import (VLLM, VLLMError, build_chat_payload, ensure_room,
+                   iter_vllm_chat, supports_thinking)
 from .config import ROOT, role
 
 BUILTIN_DIR = ROOT / "scenarios"
@@ -256,41 +257,39 @@ async def _generate(system: str, user: str, schema: dict):
         if err:
             yield {"type": "error", "error": err}
             return
-        payload = {"model": model, "stream": True, "format": schema,
-                   "options": {"temperature": 0.7},  # drafts should vary — the SE picks
-                   "messages": [{"role": "system", "content": system},
-                                {"role": "user", "content": user}]}
-        if await supports_thinking(client, model):
-            payload["think"] = False
+        use_think = False if await supports_thinking(client, model) else None
+        payload = build_chat_payload(
+            model,
+            [{"role": "system", "content": system}, {"role": "user", "content": user}],
+            stream=True, options={"temperature": 0.7}, think=use_think, schema=schema,
+        )
         streamed = 0
         settled = False
         content = []
         t0 = time.time()
         try:
-            async with client.stream("POST", f"{OLLAMA}/api/chat", json=payload) as resp:
-                if resp.status_code != 200:
-                    yield {"type": "error", "error": (await resp.aread()).decode(errors="replace")[:200]}
-                    return
-                async for line in resp.aiter_lines():
-                    if not line.strip():
-                        continue
-                    chunk = json.loads(line)
-                    if chunk.get("message", {}).get("thinking"):
-                        streamed += 1
-                        tokens.add_pending()
-                    piece = chunk.get("message", {}).get("content", "")
-                    if piece:
-                        streamed += 1
-                        tokens.add_pending()
-                        content.append(piece)
-                    if streamed % 25 == 0 and streamed:
-                        yield {"type": "progress", "tokens": streamed,
-                               "seconds": round(time.time() - t0, 1)}
-                    if chunk.get("done"):
-                        tokens.settle_pending(streamed)
-                        settled = True
-                        tokens.record(in_tokens=chunk.get("prompt_eval_count", 0),
-                                      out_tokens=chunk.get("eval_count", streamed))
+            p_in = p_out = 0
+            async for chunk in iter_vllm_chat(client, VLLM, payload):
+                if chunk["thinking"]:
+                    streamed += 1
+                    tokens.add_pending()
+                piece = chunk["content"]
+                if piece:
+                    streamed += 1
+                    tokens.add_pending()
+                    content.append(piece)
+                if chunk["usage"]:
+                    p_in = chunk["usage"].get("prompt_tokens", p_in)
+                    p_out = chunk["usage"].get("completion_tokens", p_out)
+                if streamed % 25 == 0 and streamed:
+                    yield {"type": "progress", "tokens": streamed,
+                           "seconds": round(time.time() - t0, 1)}
+            tokens.settle_pending(streamed)
+            settled = True
+            tokens.record(in_tokens=p_in, out_tokens=p_out or streamed)
+        except VLLMError as e:
+            yield {"type": "error", "error": str(e)}
+            return
         finally:
             if not settled and streamed:
                 tokens.settle_pending(streamed)

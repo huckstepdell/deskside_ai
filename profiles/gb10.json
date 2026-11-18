@@ -1,19 +1,19 @@
 {
-  "_comment": "GB10: 128GB unified memory. No role overrides — uses models.json defaults (Essentials tier).",
-  "pull": [
-    "nemotron-3.5-lightning:30b",
-    "qwen2.5-coder:32b",
-    "gemma4:26b",
-    "gemma4:9b",
-    "nomic-embed-text"
-  ],
+  "_comment": "GB10: 128GB unified memory. vLLM serving Muse Glimmer 30B (multimodal reasoning + tool calling) at 64K context.",
+  "roles": {
+    "workhorse": "meta-models/Muse-Glimmer-30B",
+    "vision": "meta-models/Muse-Glimmer-30B",
+    "fast": "meta-models/Muse-Glimmer-30B",
+    "reasoner": "meta-models/Muse-Glimmer-30B",
+    "chat_default": "meta-models/Muse-Glimmer-30B",
+    "embed": "BAAI/bge-small-en-v1.5"
+  },
   "env": {
-    "OLLAMA_MAX_LOADED_MODELS": "2",
-    "OLLAMA_NUM_PARALLEL": "2",
-    "OLLAMA_KEEP_ALIVE": "30m",
-    "OLLAMA_CONTEXT_LENGTH": "65536",
-    "OLLAMA_FLASH_ATTENTION": "1",
-    "OLLAMA_KV_CACHE_TYPE": "q8_0",
-    "OLLAMA_GPU_OVERHEAD": "536870912"
+    "VLLM_MODEL": "meta-models/Muse-Glimmer-30B",
+    "VLLM_MAX_MODEL_LEN": "65536",
+    "VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+    "VLLM_KV_CACHE_DTYPE": "fp8",
+    "VLLM_MAX_NUM_SEQS": "8",
+    "VLLM_TOOL_CALL_PARSER": "hermes"
   }
 }

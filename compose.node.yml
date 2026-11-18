@@ -1,6 +1,9 @@
 # Dockhand: deploy from Git with this file (build at deploy), set the variables in the stack environment.
-# Compute node: Ollama + metrics agent, no dashboard. Run on each GPU machine.
-#   DEMO_PROFILE=rtx4070 docker compose -f compose.node.yml up -d --build
+# Compute node: vLLM + metrics agent, no dashboard. Run on each GPU machine.
+#   DEMO_PROFILE=blackwell4000 docker compose -f compose.node.yml up -d --build
+# Optional dedicated containers (enable on nodes with enough VRAM):
+#   docker compose -f compose.node.yml --profile embed up -d
+#   docker compose -f compose.node.yml --profile fim up -d
 # BIND_IP pins the published ports to one address (e.g. the machine's tailnet IP) instead of all interfaces.
 # DEVICE_NAME is what the dashboard shows for this machine; the GB10 can leave it unset.
 services:
@@ -9,16 +12,18 @@ services:
       context: .
     image: ai-demo-compute:latest
     restart: unless-stopped
+    shm_size: "8gb"
     environment:
       DEMO_MODE: node
       DEMO_PROFILE: ${DEMO_PROFILE:-gb10}
-      DEMO_PULL: ${DEMO_PULL:-auto}
       DEVICE_NAME: ${DEVICE_NAME:-}
+      VLLM_MODEL: ${VLLM_MODEL:-}
+      HF_TOKEN: ${HF_TOKEN:-}
     ports:
-      - "${BIND_IP:-0.0.0.0}:11435:11434"   # Ollama
-      - "${BIND_IP:-0.0.0.0}:9101:9101"     # metrics agent
+      - "${BIND_IP:-0.0.0.0}:8000:8000"   # vLLM OpenAI-compatible API
+      - "${BIND_IP:-0.0.0.0}:9101:9101"   # metrics agent
     volumes:
-      - ollama:/root/.ollama
+      - huggingface:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
@@ -27,30 +32,53 @@ services:
               count: all
               capabilities: [gpu]
 
-  # Dedicated Ollama for the FIM/autocomplete model, never unloaded (OLLAMA_KEEP_ALIVE=-1),
-  # so chat model swaps on the main instance (11435) can't evict it. Port 11436.
-  # Skip it on nodes that don't serve autocomplete: docker compose up -d node
-  fim:
-    image: ollama/ollama:latest
+  # Optional dedicated vLLM container for embeddings (Docs Q&A / RAG). Port 8001.
+  # Point the dashboard at it with VLLM_EMBED_URL=http://<host>:8001
+  embed:
+    profiles: ["embed"]
+    image: vllm/vllm-openai:latest
     restart: unless-stopped
     environment:
-      FIM_MODEL: ${FIM_MODEL:-qwen2.5-coder:1.5b-base}
-      OLLAMA_KEEP_ALIVE: "-1"
-      OLLAMA_MAX_LOADED_MODELS: "1"
-      OLLAMA_NUM_PARALLEL: "1"
-      OLLAMA_CONTEXT_LENGTH: "4096"
-    ports:
-      - "${BIND_IP:-0.0.0.0}:11436:11434"
-    volumes:
-      - ollama-fim:/root/.ollama
-    entrypoint: ["/bin/sh", "-c"]
+      HF_TOKEN: ${HF_TOKEN:-}
     command:
-      - |
-        ollama serve &
-        until ollama list >/dev/null 2>&1; do sleep 1; done
-        ollama pull "$$FIM_MODEL"
-        ollama run "$$FIM_MODEL" "" >/dev/null
-        wait
+      - --model
+      - ${EMBED_MODEL:-BAAI/bge-small-en-v1.5}
+      - --task
+      - embed
+      - --gpu-memory-utilization
+      - ${EMBED_GPU_MEMORY_UTILIZATION:-0.12}
+      - --max-model-len
+      - "512"
+    ports:
+      - "${BIND_IP:-0.0.0.0}:8001:8000"
+    volumes:
+      - huggingface-embed:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Optional dedicated vLLM container for FIM/autocomplete. Port 8002.
+  fim:
+    profiles: ["fim"]
+    image: vllm/vllm-openai:latest
+    restart: unless-stopped
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+    command:
+      - --model
+      - ${FIM_MODEL:-Qwen/Qwen2.5-Coder-1.5B}
+      - --max-model-len
+      - "4096"
+      - --gpu-memory-utilization
+      - ${FIM_GPU_MEMORY_UTILIZATION:-0.20}
+    ports:
+      - "${BIND_IP:-0.0.0.0}:8002:8000"
+    volumes:
+      - huggingface-fim:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
@@ -60,5 +88,6 @@ services:
               capabilities: [gpu]
 
 volumes:
-  ollama:
-  ollama-fim:
+  huggingface:
+  huggingface-embed:
+  huggingface-fim:

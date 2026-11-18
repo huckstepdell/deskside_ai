@@ -16,7 +16,9 @@ import time
 import httpx
 
 from . import tokens
-from .chat import OLLAMA, _loaded_models, _prepare_model, ensure_room, supports_thinking
+from .chat import (VLLM, VLLMError, _loaded_models, _prepare_model,
+                   build_chat_payload, ensure_room, iter_vllm_chat,
+                   supports_thinking)
 
 _running = False
 
@@ -205,50 +207,46 @@ async def run(job_key: str, count: int, model: str, reasoning: bool = False):
                 think_buf: list[str] = []
                 last_emit = 0
                 item_t0 = time.time()
-                payload = {"model": model, "messages": messages, "stream": True}
-                if can_think:
-                    payload["think"] = reasoning
+                use_think = reasoning if can_think else None
+                payload = build_chat_payload(model, messages, stream=True, think=use_think)
                 try:
-                    async with client.stream("POST", f"{OLLAMA}/api/chat", json=payload) as resp:
-                        if resp.status_code != 200:
-                            body = (await resp.aread()).decode(errors="replace")[:300]
-                            yield _sse({"type": "error", "error": body})
-                            return
-                        async for line in resp.aiter_lines():
-                            if not line.strip():
-                                continue
-                            chunk = json.loads(line)
-                            think = chunk.get("message", {}).get("thinking", "")
-                            if think:
-                                streamed += 1
-                                tokens.add_pending()
-                                think_buf.append(think)
-                            piece = chunk.get("message", {}).get("content", "")
-                            if piece:
-                                streamed += 1
-                                tokens.add_pending()
-                                content_seen = True
-                                buf.append(piece)
-                            if streamed - last_emit >= 15:
-                                last_emit = streamed
-                                elapsed = max(time.time() - item_t0, 0.1)
-                                yield _sse({"type": "tick", "index": i,
-                                            "delta": "".join(buf), "think_delta": "".join(think_buf),
-                                            "phase": "writing" if content_seen else "thinking",
-                                            "item_tokens": streamed,
-                                            "tok_per_sec": round(streamed / elapsed, 1),
-                                            "run_in": run_in, "run_out": run_out + streamed,
-                                            "saved": _run_saved(run_in, run_out + streamed)})
-                                buf = []
-                                think_buf = []
-                            if chunk.get("done"):
-                                tokens.settle_pending(streamed)
-                                settled = True
-                                p_in = chunk.get("prompt_eval_count", 0)
-                                p_out = chunk.get("eval_count", streamed)
-                                tokens.record(in_tokens=p_in, out_tokens=p_out)
-                                run_in += p_in
-                                run_out += p_out
+                    p_in = p_out = 0
+                    async for chunk in iter_vllm_chat(client, VLLM, payload):
+                        think = chunk["thinking"]
+                        if think:
+                            streamed += 1
+                            tokens.add_pending()
+                            think_buf.append(think)
+                        piece = chunk["content"]
+                        if piece:
+                            streamed += 1
+                            tokens.add_pending()
+                            content_seen = True
+                            buf.append(piece)
+                        if chunk["usage"]:
+                            p_in = chunk["usage"].get("prompt_tokens", p_in)
+                            p_out = chunk["usage"].get("completion_tokens", p_out)
+                        if streamed - last_emit >= 15:
+                            last_emit = streamed
+                            elapsed = max(time.time() - item_t0, 0.1)
+                            yield _sse({"type": "tick", "index": i,
+                                        "delta": "".join(buf), "think_delta": "".join(think_buf),
+                                        "phase": "writing" if content_seen else "thinking",
+                                        "item_tokens": streamed,
+                                        "tok_per_sec": round(streamed / elapsed, 1),
+                                        "run_in": run_in, "run_out": run_out + streamed,
+                                        "saved": _run_saved(run_in, run_out + streamed)})
+                            buf = []
+                            think_buf = []
+                    tokens.settle_pending(streamed)
+                    settled = True
+                    p_out = p_out or streamed
+                    tokens.record(in_tokens=p_in, out_tokens=p_out)
+                    run_in += p_in
+                    run_out += p_out
+                except VLLMError as e:
+                    yield _sse({"type": "error", "error": str(e)})
+                    return
                 finally:
                     if not settled and streamed:  # aborted mid-item — keep what ran
                         tokens.settle_pending(streamed)

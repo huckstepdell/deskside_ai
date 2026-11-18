@@ -17,7 +17,8 @@ import time
 import httpx
 
 from . import tokens
-from .chat import OLLAMA, ensure_room, supports_thinking
+from .chat import (VLLM, VLLMError, build_chat_payload, ensure_room,
+                   iter_vllm_chat, supports_thinking)
 
 # The configured workhorse with reasoning off: benchmarked ~18s/stage and
 # still catches the planted contradiction (thinking-on takes ~3x longer
@@ -246,35 +247,30 @@ async def run(stage: str, notes: str | None, model: str = DEFAULT_MODEL):
                 yield _sse({"type": "error", "error": err})
                 return
             yield _sse({"type": "status", "status": "Reading the case material…"})
-            payload = {"model": model, "messages": messages, "stream": True, "format": schema,
-                       "options": {"temperature": 0}}  # deterministic → repeatable demo runs
-            if await supports_thinking(client, model):
-                payload["think"] = False  # stages are schema-driven; speed wins here
-            async with client.stream("POST", f"{OLLAMA}/api/chat", json=payload) as resp:
-                if resp.status_code != 200:
-                    body = (await resp.aread()).decode(errors="replace")[:300]
-                    yield _sse({"type": "error", "error": body})
-                    return
-                async for line in resp.aiter_lines():
-                    if not line.strip():
-                        continue
-                    chunk = json.loads(line)
-                    if chunk.get("message", {}).get("thinking"):
-                        streamed += 1
-                        tokens.add_pending()
-                    piece = chunk.get("message", {}).get("content", "")
-                    if piece:
-                        streamed += 1
-                        tokens.add_pending()
-                        content.append(piece)
-                    if streamed and streamed % 25 == 0:
-                        yield _sse({"type": "progress", "tokens": streamed,
-                                    "seconds": round(time.time() - start, 1)})
-                    if chunk.get("done"):
-                        tokens.settle_pending(streamed)
-                        settled = True
-                        tokens.record(in_tokens=chunk.get("prompt_eval_count", 0),
-                                      out_tokens=chunk.get("eval_count", streamed))
+            use_think = False if await supports_thinking(client, model) else None
+            payload = build_chat_payload(
+                model, messages, stream=True, options={"temperature": 0},
+                think=use_think, schema=schema,
+            )
+            p_in = p_out = 0
+            async for chunk in iter_vllm_chat(client, VLLM, payload):
+                if chunk["thinking"]:
+                    streamed += 1
+                    tokens.add_pending()
+                piece = chunk["content"]
+                if piece:
+                    streamed += 1
+                    tokens.add_pending()
+                    content.append(piece)
+                if chunk["usage"]:
+                    p_in = chunk["usage"].get("prompt_tokens", p_in)
+                    p_out = chunk["usage"].get("completion_tokens", p_out)
+                if streamed and streamed % 25 == 0:
+                    yield _sse({"type": "progress", "tokens": streamed,
+                                "seconds": round(time.time() - start, 1)})
+            tokens.settle_pending(streamed)
+            settled = True
+            tokens.record(in_tokens=p_in, out_tokens=p_out or streamed)
         text = "".join(content)
         try:
             result = json.loads(text)
@@ -287,8 +283,8 @@ async def run(stage: str, notes: str | None, model: str = DEFAULT_MODEL):
                 g for g in result["linked_groups"] if len(g.get("case_numbers", [])) >= 2]
         yield _sse({"type": "result", "stage": stage, "data": result})
         yield _sse({"type": "done", "tokens": streamed, "seconds": round(time.time() - start, 1)})
-    except httpx.HTTPError as e:
-        yield _sse({"type": "error", "error": f"Ollama unreachable: {e}"})
+    except (VLLMError, httpx.HTTPError) as e:
+        yield _sse({"type": "error", "error": f"vLLM unreachable: {e}" if isinstance(e, httpx.HTTPError) else str(e)})
     finally:
         if not settled and streamed:
             tokens.settle_pending(streamed)

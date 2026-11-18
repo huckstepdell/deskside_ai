@@ -501,7 +501,7 @@ async function refreshPreflight() {
   const item = (ok, label, sub = "") =>
     `<li><span class="pf-light ${ok ? "pf-ok" : "pf-bad"}"></span>${label}${sub ? `<span class="sub">${sub}</span>` : ""}</li>`;
   $("preflight").innerHTML = [
-    item(pf.ollama, "AI engine (Ollama)", pf.ollama ? "running" : "not running"),
+    item(pf.vllm ?? pf.ollama, "AI engine (vLLM)", (pf.vllm ?? pf.ollama) ? "running" : "not running"),
     item(pf.chat_models.length > 0, "Chat models", `${pf.chat_models.length} ready`),
     item(pf.vision_model, "Vision model", pf.vision_model ? "ready" : "missing"),
     item(pf.embed_model, "Docs Q&A index model", pf.embed_model ? "ready" : "missing"),
@@ -1844,9 +1844,9 @@ async function loadLadder() {
     + "tasks that get harder as they go.";
   // never offer a button that can't work — say what to type instead, quietly
   const missing = ["small", "big"].filter((s) => !info.models[s].installed);
-  if (!info.ollama_up) {
+  if (!(info.vllm_up ?? info.ollama_up)) {
     $("ldRun").disabled = true;
-    $("ldNote").innerHTML = "Ollama isn't answering — check "
+    $("ldNote").innerHTML = "vLLM isn't answering — check "
       + "the compute node's container, then reload this page.";
   } else if (missing.length) {
     $("ldRun").disabled = true;
@@ -3055,7 +3055,7 @@ route();
 connectTelemetry();
 apiJSON("/api/config").then((c) => { CFG = c; }).catch(() => {})
   .finally(() => {
-    loadModels().catch(() => { $("modelRow").innerHTML = `<span class="dim">⚠ Ollama not reachable — check the compute node's container</span>`; });
+    loadModels().catch(() => { $("modelRow").innerHTML = `<span class="dim">⚠ vLLM not reachable — check the compute node's container</span>`; });
     loadBatchControls().catch(() => {});
     loadAgentWorks().catch(() => {});
     loadArena().catch(() => {});

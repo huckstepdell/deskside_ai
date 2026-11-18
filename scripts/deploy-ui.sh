@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Build and (re)deploy the dashboard (compose.ui.yml) without Dockhand/Hawser.
 # Run on the machine that should host the UI (no GPU needed):
-#   OLLAMA_URL=http://<node>:11435 TELEMETRY_URL=http://<node>:9101 scripts/deploy-ui.sh
+#   VLLM_URL=http://<node>:8000 TELEMETRY_URL=http://<node>:9101 scripts/deploy-ui.sh
 #
 # Options (env):
-#   OLLAMA_URL       required: the primary compute node's Ollama
+#   VLLM_URL         required: the primary compute node's vLLM endpoint
+#   VLLM_EMBED_URL   optional: dedicated vLLM embeddings endpoint (e.g. http://<node>:8001)
 #   TELEMETRY_URL    the primary node's metrics agent
 #   DEMO_PROFILE     profile for the primary node (default gb10)
 #   PRIMARY_LABEL / DEVICE_NAME   display names
@@ -16,7 +17,7 @@ set -euo pipefail
 COMPOSE_FILE=compose.ui.yml
 source "$(dirname "$0")/_deploy-common.sh"
 
-: "${OLLAMA_URL:?set OLLAMA_URL, e.g. OLLAMA_URL=http://gb10:11435}"
+: "${VLLM_URL:?set VLLM_URL, e.g. VLLM_URL=http://gb10:8000}"
 
 deploy_stack
 echo "Dashboard: http://$(hostname -f 2>/dev/null || hostname):8080"

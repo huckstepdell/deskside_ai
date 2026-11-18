@@ -40,7 +40,8 @@ import httpx
 
 from . import tokens
 from .agentworks import ThinkFilter, _sse
-from .chat import OLLAMA, _loaded_models, ensure_room, mem_available_gb
+from .chat import (VLLM, VLLMError, _loaded_models, build_chat_payload,
+                   ensure_room, iter_vllm_chat, mem_available_gb)
 
 # The audited pairing. Not presenter-choosable: the audition only validated
 # these two models against these four tasks, and a different pair has a
@@ -730,27 +731,28 @@ async def info() -> dict:
               "big": {"name": BIG_MODEL, "role": "The big one"}}
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            tags = await client.get(f"{OLLAMA}/api/tags")
+            tags = await client.get(f"{VLLM}/v1/models")
             tags.raise_for_status()
-            sizes = {m["name"]: m["size"] / 2**30 for m in tags.json().get("models", [])}
+            served = {m["id"] for m in tags.json().get("data", [])}
             resident = {m["name"] for m in await _loaded_models(client)}
         for side in models.values():
-            side["installed"] = side["name"] in sizes
+            side["installed"] = side["name"] in served
             side["resident"] = side["name"] in resident
-            side["size_gb"] = round(sizes.get(side["name"], 0), 1)
+            side["size_gb"] = 0
             if not side["installed"]:
-                side["hint"] = f"ollama pull {side['name']}"
-        ollama_up = True
+                side["hint"] = f"Serve {side['name']} via vLLM"
+        vllm_up = True
     except (httpx.HTTPError, ValueError):
-        ollama_up = False
+        vllm_up = False
         for side in models.values():
             side.update(installed=False, resident=False, size_gb=0,
-                        hint=f"ollama pull {side['name']}")
+                        hint=f"Serve {side['name']} via vLLM")
     return {
         "models": models,
         "rungs": rung_info(),
-        "ollama_up": ollama_up,
-        "ready": ollama_up and all(s["installed"] for s in models.values()),
+        "ollama_up": vllm_up,
+        "vllm_up": vllm_up,
+        "ready": vllm_up and all(s["installed"] for s in models.values()),
         "free_gb": round(mem_available_gb(), 1),
         "pool_gb": round(mem_total_gb()),
     }
@@ -759,50 +761,18 @@ async def info() -> dict:
 # ------------------------------------------------------------------ the run
 
 async def _load(client: httpx.AsyncClient, model: str, size_gb: float = 0.0):
-    """Load `model` with keep_alive, yielding ('status', text, data) heartbeats
-    while it walks into memory. Ends with ('ready', …) or ('error', …).
-
-    The heartbeat carries how many gigabytes have actually landed — MemAvailable
-    before the load minus MemAvailable now. On GB10 there is no separate VRAM
-    figure to read (unified memory; nvidia-smi reports N/A), so /proc/meminfo IS
-    the measurement, and the number on screen is a real one.
-    """
-    prep = asyncio.ensure_future(client.post(
-        f"{OLLAMA}/api/generate",
-        json={"model": model, "keep_alive": "30m"}, timeout=1200))
-    t0 = time.time()
-    free0 = mem_available_gb()
-    while True:
-        # 0.4 s, not 2 s: this drives a bar the room is watching fill.
-        done, _ = await asyncio.wait({prep}, timeout=0.4)
-        if done:
-            break
-        elapsed = time.time() - t0
-        free = mem_available_gb()
-        walked = max(0.0, free0 - free)
-        if size_gb:
-            walked = min(walked, size_gb)
-        yield ("status", f"Loading {model} into unified memory… {int(elapsed)}s",
-               {"phase": "loading", "model": model, "size_gb": round(size_gb, 1),
-                "loaded_gb": round(walked, 1), "elapsed": round(elapsed, 1),
-                "free_gb": round(free, 1), "pool_gb": round(mem_total_gb())})
-    try:
-        prep.result().raise_for_status()
-    except (httpx.HTTPError, asyncio.CancelledError) as e:
-        yield ("error", f"Couldn't load {model}: {e}", None)
-        return
-    elapsed = time.time() - t0
-    yield ("ready", f"{model} resident after {elapsed:.0f}s",
+    """vLLM models are resident at startup; report ready immediately."""
+    yield ("ready", f"{model} resident",
            {"phase": "resident", "model": model, "size_gb": round(size_gb, 1),
-            "loaded_gb": round(size_gb, 1), "elapsed": round(elapsed, 1),
+            "loaded_gb": round(size_gb, 1), "elapsed": 0.0,
             "free_gb": round(mem_available_gb(), 1), "pool_gb": round(mem_total_gb())})
 
 
 async def _model_sizes(client: httpx.AsyncClient) -> dict:
     try:
-        r = await client.get(f"{OLLAMA}/api/tags", timeout=10)
+        r = await client.get(f"{VLLM}/v1/models", timeout=10)
         r.raise_for_status()
-        return {m["name"]: m["size"] / 2**30 for m in r.json().get("models", [])}
+        return {m["id"]: 0.0 for m in r.json().get("data", [])}
     except (httpx.HTTPError, ValueError, KeyError):
         return {}
 
@@ -872,66 +842,57 @@ async def _run_rung(client: httpx.AsyncClient, rung: dict, side: str, model: str
     """
     yield ("sse", _sse({"type": "model_start", "rung": rung["n"],
                         "side": side, "model": model}))
-    payload = {
-        "model": model,
-        "messages": [{"role": "user", "content": rung["prompt"]}],
-        "stream": True,
-        "think": False,
-        "keep_alive": "30m",
-        "options": {"temperature": 0, "num_predict": rung["num_predict"], "seed": 42},
-    }
+    payload = build_chat_payload(
+        model, [{"role": "user", "content": rung["prompt"]}],
+        stream=True,
+        options={"temperature": 0, "num_predict": rung["num_predict"], "seed": 42},
+        think=False,
+    )
     t0 = time.time()
     full: list[str] = []
     buf: list[str] = []
     last_emit = 0.0
     streamed = 0
     settled = False
-    # think=false is pinned, but a model can still wrap a scratchpad in literal
-    # <think> tags inside the content channel — don't put that on a demo screen.
     scrub = ThinkFilter()
     try:
-        async with client.stream("POST", f"{OLLAMA}/api/chat", json=payload) as resp:
-            if resp.status_code != 200:
-                body = (await resp.aread()).decode(errors="replace")[:300]
-                yield ("sse", _sse({"type": "verdict", "rung": rung["n"], "side": side,
-                                    "state": "error", "explain": body,
-                                    "fail_short": "Ollama refused the request"}))
-                yield ("state", "error")
-                return
-            done_reason = None
-            out_tokens = 0
-            async for line in resp.aiter_lines():
-                if not line.strip():
-                    continue
-                chunk = json.loads(line)
-                piece = chunk.get("message", {}).get("content", "")
-                if piece:
-                    streamed += 1
-                    tokens.add_pending()
-                    full.append(piece)
-                    buf.append(scrub.feed(piece))
-                    if time.time() - last_emit > 0.12:
-                        last_emit = time.time()
-                        # `tok` is the running chunk count — the pane's rising
-                        # token counter, so a 32 s answer never looks frozen.
-                        yield ("sse", _sse({"type": "delta", "rung": rung["n"],
-                                            "side": side, "text": "".join(buf),
-                                            "tok": streamed}))
-                        buf = []
-                if chunk.get("done"):
-                    done_reason = chunk.get("done_reason")
-                    out_tokens = chunk.get("eval_count", streamed)
-                    tokens.settle_pending(streamed)
-                    settled = True
-                    tokens.record(in_tokens=chunk.get("prompt_eval_count", 0),
-                                  out_tokens=out_tokens)
-            yield ("sse", _sse({"type": "delta", "rung": rung["n"], "side": side,
-                                "text": "".join(buf) + scrub.flush(),
-                                "tok": streamed}))
+        done_reason = None
+        p_in = out_tokens = 0
+        async for chunk in iter_vllm_chat(client, VLLM, payload):
+            piece = chunk["content"]
+            if piece:
+                streamed += 1
+                tokens.add_pending()
+                full.append(piece)
+                buf.append(scrub.feed(piece))
+                if time.time() - last_emit > 0.12:
+                    last_emit = time.time()
+                    yield ("sse", _sse({"type": "delta", "rung": rung["n"],
+                                        "side": side, "text": "".join(buf),
+                                        "tok": streamed}))
+                    buf = []
+            if chunk["finish_reason"]:
+                done_reason = chunk["finish_reason"]
+            if chunk["usage"]:
+                p_in = chunk["usage"].get("prompt_tokens", p_in)
+                out_tokens = chunk["usage"].get("completion_tokens", out_tokens)
+        out_tokens = out_tokens or streamed
+        tokens.settle_pending(streamed)
+        settled = True
+        tokens.record(in_tokens=p_in, out_tokens=out_tokens)
+        yield ("sse", _sse({"type": "delta", "rung": rung["n"], "side": side,
+                            "text": "".join(buf) + scrub.flush(),
+                            "tok": streamed}))
+    except VLLMError as e:
+        yield ("sse", _sse({"type": "verdict", "rung": rung["n"], "side": side,
+                            "state": "error", "explain": str(e),
+                            "fail_short": "vLLM refused the request"}))
+        yield ("state", "error")
+        return
     except httpx.HTTPError as e:
         yield ("sse", _sse({"type": "verdict", "rung": rung["n"], "side": side,
-                            "state": "error", "explain": f"Ollama unreachable: {e}",
-                            "fail_short": "Ollama stopped answering"}))
+                            "state": "error", "explain": f"vLLM unreachable: {e}",
+                            "fail_short": "vLLM stopped answering"}))
         yield ("state", "error")
         return
     finally:
@@ -1008,7 +969,7 @@ async def run():
                     # progress fields ride alongside it.
                     yield _sse({"type": "status", "status": msg, **(data or {})})
             except httpx.HTTPError as e:
-                yield _sse({"type": "error", "error": f"Ollama unreachable: {e}"})
+                yield _sse({"type": "error", "error": f"vLLM unreachable: {e}"})
                 return
 
             for i, rung in enumerate(RUNGS):
