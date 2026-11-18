@@ -8,6 +8,17 @@
     "chat_default": "Qwen/Qwen2.5-7B-Instruct-AWQ",
     "embed": "BAAI/bge-small-en-v1.5"
   },
+<<<<<<< HEAD
+=======
+  "pull": [
+    "gemma4:e4b",
+    "qwen2.5-coder:7b",
+    "qwen2.5:3b",
+    "llama3.2:3b",
+    "lfm3:1.7b",
+    "nomic-embed-text"
+  ],
+>>>>>>> a49ff79def3acca8f15fa2c6fc4e2754bec78c9c
   "env": {
     "VLLM_MODEL": "Qwen/Qwen2.5-7B-Instruct-AWQ",
     "VLLM_QUANTIZATION": "awq_marlin",
