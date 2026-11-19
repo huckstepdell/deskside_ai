@@ -1,5 +1,5 @@
 {
-  "_comment": "16GB Blackwell 4000 (Optimus): vLLM serving Qwen3 8B NVFP4 at 64K context for coding agents.",
+  "_comment": "16GB Blackwell 4000 (Optimus): vLLM serving Qwen3 8B NVFP4 at native 40K max context for coding agents.",
   "roles": {
     "workhorse": "nvidia/Qwen3-8B-NVFP4",
     "vision": "nvidia/Qwen3-8B-NVFP4",
@@ -10,7 +10,7 @@
   },
   "env": {
     "VLLM_MODEL": "nvidia/Qwen3-8B-NVFP4",
-    "VLLM_MAX_MODEL_LEN": "65536",
+    "VLLM_MAX_MODEL_LEN": "40960",
     "VLLM_GPU_MEMORY_UTILIZATION": "0.92",
     "VLLM_KV_CACHE_DTYPE": "fp8",
     "VLLM_MAX_NUM_SEQS": "1",

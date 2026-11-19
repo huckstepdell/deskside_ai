@@ -85,10 +85,10 @@
 		},
 		{
 			"model":                 "blackwell4000/nvidia/Qwen3-8B-NVFP4",
-			"display_name":          "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 64K)",
+			"display_name":          "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 40K)",
 			"priority":              99,
-			"context_window_tokens": 65536,
-			"max_output_tokens":     8192,
+			"context_window_tokens": 40960,
+			"max_output_tokens":     4096,
 		},
 		{
 			"model":                 "blackwell4000/nvidia/Qwen3-8B-NVFP4",
