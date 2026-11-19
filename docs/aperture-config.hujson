@@ -13,6 +13,7 @@
 			"baseurl": "http://pro-max-plus:8000",
 			"models": [
 				"nvidia/Qwen3-8B-NVFP4",
+				"nvidia/Qwen3-8B-NVFP4-32k",
 			],
 			"authorization": "bearer",
 			"compatibility": {
@@ -91,7 +92,7 @@
 			"max_output_tokens":     4096,
 		},
 		{
-			"model":                 "blackwell4000/nvidia/Qwen3-8B-NVFP4",
+			"model":                 "blackwell4000/nvidia/Qwen3-8B-NVFP4-32k",
 			"display_name":          "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 32K Demo)",
 			"priority":              97,
 			"context_window_tokens": 32768,

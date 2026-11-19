@@ -26,7 +26,7 @@
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4",
+        "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4-32k",
         "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 32K Demo)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,

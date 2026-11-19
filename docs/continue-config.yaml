@@ -39,7 +39,7 @@ models:
 
   - name: Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 32K Demo)
     provider: openai
-    model: blackwell4000/nvidia/Qwen3-8B-NVFP4
+    model: blackwell4000/nvidia/Qwen3-8B-NVFP4-32k
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
