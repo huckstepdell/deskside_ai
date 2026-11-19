@@ -3,6 +3,7 @@ services:
     build:
       context: .
     image: ai-demo-compute:latest
+    pull_policy: build
     restart: unless-stopped
     shm_size: "8gb"
     environment:
