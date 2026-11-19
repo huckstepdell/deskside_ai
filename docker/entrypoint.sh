@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs vLLM and the dashboard (or metrics agent) in one container.
-#   DEMO_MODE      all (default) | node (vLLM + metrics agent) | ui (dashboard only)
+# Runs vLLM and (in all/ui mode) the dashboard.
+#   DEMO_MODE      all (default) | node (vLLM only; use compose.agent.yml for :9101 metrics) | ui (dashboard only)
 #   DEMO_PROFILE   gb10 | rtx4070 | blackwell4000 | none  (profiles/<name>.json)
 #   VLLM_MODEL     HuggingFace model ID or local path (overrides profile env)
 set -uo pipefail
@@ -53,6 +53,16 @@ if [[ "$MODE" != "ui" ]]; then
     VLLM_ARGS+=("${EXTRA_ARR[@]}")
   fi
 
+  if [[ "$MODE" == "node" ]]; then
+    exec env \
+      -u VLLM_MODEL -u VLLM_MAX_MODEL_LEN -u VLLM_GPU_MEMORY_UTILIZATION \
+      -u VLLM_KV_CACHE_DTYPE -u VLLM_DTYPE -u VLLM_MAX_NUM_SEQS \
+      -u VLLM_QUANTIZATION -u VLLM_TENSOR_PARALLEL_SIZE \
+      -u VLLM_REASONING_PARSER -u VLLM_TOOL_CALL_PARSER \
+      -u VLLM_ENFORCE_EAGER -u VLLM_EXTRA_ARGS -u VLLM_HOST -u VLLM_PORT \
+      vllm serve "${VLLM_ARGS[@]}"
+  fi
+
   env \
     -u VLLM_MODEL -u VLLM_MAX_MODEL_LEN -u VLLM_GPU_MEMORY_UTILIZATION \
     -u VLLM_KV_CACHE_DTYPE -u VLLM_DTYPE -u VLLM_MAX_NUM_SEQS \
@@ -63,12 +73,8 @@ if [[ "$MODE" != "ui" ]]; then
   PIDS+=($!)
 fi
 
-if [[ "$MODE" == "node" ]]; then
-  uvicorn server.agent:app --host 0.0.0.0 --port 9101 &
-else
-  uvicorn server.main:app --host 0.0.0.0 --port 8080 \
-    --timeout-keep-alive 620 --timeout-graceful-shutdown 3 &
-fi
+uvicorn server.main:app --host 0.0.0.0 --port 8080 \
+  --timeout-keep-alive 620 --timeout-graceful-shutdown 3 &
 PIDS+=($!)
 
 wait -n "${PIDS[@]}"

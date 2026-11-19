@@ -21,7 +21,6 @@ services:
       HF_TOKEN: ${HF_TOKEN:-}
     ports:
       - "${BIND_IP:-0.0.0.0}:8000:8000"   # vLLM OpenAI-compatible API
-      - "${BIND_IP:-0.0.0.0}:9101:9101"   # metrics agent
     volumes:
       - huggingface:/root/.cache/huggingface
     deploy:

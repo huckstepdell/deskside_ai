@@ -31,10 +31,10 @@ COPY . .
 RUN chmod +x docker/entrypoint.sh
 
 ENV DEMO_CONFIG=/app/profiles/active.json
-EXPOSE 8080 9101 8000
+EXPOSE 8080 8000
 VOLUME ["/root/.cache/huggingface", "/app/data"]
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s \
-    CMD curl -sf http://localhost:8080/api/device || curl -sf http://localhost:9101/api/device || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s \
+    CMD curl -sf http://localhost:8080/api/device || curl -sf http://localhost:8000/health || exit 1
 
 ENTRYPOINT ["/app/docker/entrypoint.sh"]

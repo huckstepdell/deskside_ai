@@ -1,11 +1,17 @@
 {
   "_comment": "Curated model metadata and install tiers. This is the editorial layer only — any model served by vLLM appears in the dashboard automatically; entries here add friendly labels, traits, and role/tier membership. Update via scripts/certify (Box Bench + batch sample) rather than vibes.",
   "catalog": {
-    "meta-models/Muse-Glimmer-30B": {
-      "label": "Muse Glimmer · 30B",
-      "blurb": "Multimodal reasoning model built for autonomous agents and tool calling",
-      "traits": "30B · vision · reasoning · tools",
-      "size_gb": 60
+    "nvidia/Muse-Glimmer-30B-NVFP4": {
+      "label": "Muse Glimmer · 30B (NVFP4)",
+      "blurb": "Multimodal reasoning model in native Blackwell NVFP4 for autonomous agents and tool calling",
+      "traits": "30B · NVFP4 · vision · reasoning · tools",
+      "size_gb": 23
+    },
+    "nvidia/Qwen3-8B-NVFP4": {
+      "label": "Qwen 3 · 8B (NVFP4)",
+      "blurb": "Native Blackwell FP4 8B model — fits 16 GB VRAM with 64K context for coding agents",
+      "traits": "dense 8B · NVFP4 · reasoning · tools",
+      "size_gb": 5.5
     },
     "nvidia/Qwen3-14B-NVFP4": {
       "label": "Qwen 3 · 14B (NVFP4)",
@@ -13,11 +19,11 @@
       "traits": "dense 14B · NVFP4 · reasoning · tools",
       "size_gb": 8.5
     },
-    "Qwen/Qwen2.5-7B-Instruct-AWQ": {
-      "label": "Qwen 2.5 · 7B (AWQ)",
-      "blurb": "4-bit AWQ-Marlin 7B model — fast and light on 12 GB RTX 4070",
-      "traits": "dense 7B · AWQ · tools",
-      "size_gb": 4.5
+    "Qwen/Qwen3-8B-AWQ": {
+      "label": "Qwen 3 · 8B (AWQ)",
+      "blurb": "4-bit AWQ-Marlin 8B model with reasoning and tools — fits 12 GB RTX 4070 at 32K context",
+      "traits": "dense 8B · AWQ · reasoning · tools",
+      "size_gb": 6.0
     },
     "qwen3.8:27b": {
       "label": "Qwen 3.8 · 27B",
@@ -111,11 +117,11 @@
     }
   },
   "roles": {
-    "workhorse": "meta-models/Muse-Glimmer-30B",
-    "vision": "meta-models/Muse-Glimmer-30B",
-    "fast": "meta-models/Muse-Glimmer-30B",
-    "reasoner": "meta-models/Muse-Glimmer-30B",
-    "chat_default": "meta-models/Muse-Glimmer-30B",
+    "workhorse": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "vision": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "fast": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "reasoner": "nvidia/Muse-Glimmer-30B-NVFP4",
+    "chat_default": "nvidia/Muse-Glimmer-30B-NVFP4",
     "embed": "BAAI/bge-small-en-v1.5"
   },
   "tiers": {
