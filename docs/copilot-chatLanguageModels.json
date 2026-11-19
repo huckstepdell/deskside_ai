@@ -6,18 +6,8 @@
     "apiType": "chat-completions",
     "models": [
       {
-        "id": "blackwell4000/gemma4:12b",
-        "name": "Chat - Blackwell 4K Gemma 4 12B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": true,
-        "maxInputTokens": 12288,
-        "maxOutputTokens": 4096,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "gb10/gemma4:26b",
-        "name": "Chat - GB10 Gemma 4 26B",
+        "id": "gb10/nvidia/Muse-Glimmer-30B-NVFP4",
+        "name": "Chat - GB10 Muse Glimmer 30B (NVFP4)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": true,
@@ -26,113 +16,33 @@
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "rtx4070/qwen2.5-coder:7b",
-        "name": "Code - RTX 4070 Qwen 2.5 Coder 7B",
+        "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4",
+        "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 64K)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 5120,
-        "maxOutputTokens": 3072,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "gb10/nemotron-3.5-lightning:30b",
-        "name": "Chat - GB10 Nemotron 3.5 Lightning",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 49152,
-        "maxOutputTokens": 16384,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "gb10/qwen2.5-coder:32b",
-        "name": "Code - GB10 Qwen 2.5 Coder 32B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 24576,
-        "maxOutputTokens": 8192,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "gb10/gemma4:9b",
-        "name": "Chat - GB10 Gemma 4 9B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": true,
         "maxInputTokens": 57344,
         "maxOutputTokens": 8192,
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "blackwell4000/qwen2.5-coder:14b",
-        "name": "Code - Blackwell 4K Qwen 2.5 Coder 14B",
+        "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4",
+        "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 32K Demo)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 12288,
+        "maxInputTokens": 28672,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "blackwell4000/nemotron-3.5-bolt:e4b",
-        "name": "Fast - Blackwell 4K Nemotron 3.5 Bolt E4B",
+        "id": "rtx4070/Qwen/Qwen3-8B-AWQ",
+        "name": "Code - RTX 4070 Qwen 3 8B (AWQ)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
-        "vision": true,
-        "maxInputTokens": 12288,
+        "vision": false,
+        "maxInputTokens": 28672,
         "maxOutputTokens": 4096,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "blackwell4000/llama3.1:8b",
-        "name": "Code - Blackwell 4K Llama 3.1 8B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 12288,
-        "maxOutputTokens": 4096,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "rtx4070/qwen2.5:3b",
-        "name": "Chat - RTX 4070 Qwen 2.5 3B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 5120,
-        "maxOutputTokens": 3072,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "rtx4070/llama3.2:3b",
-        "name": "Code - RTX 4070 Llama 3.2 3B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 5120,
-        "maxOutputTokens": 3072,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "rtx4070/gemma4:e4b",
-        "name": "Fast - RTX 4070 Gemma 4 E4B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": true,
-        "maxInputTokens": 5120,
-        "maxOutputTokens": 3072,
-        "modelOptions": { "temperature": 0.2 }
-      },
-      {
-        "id": "rtx4070/lfm3:1.7b",
-        "name": "Fast - RTX 4070 LFM3 1.7B",
-        "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
-        "toolCalling": true,
-        "vision": false,
-        "maxInputTokens": 5120,
-        "maxOutputTokens": 3072,
         "modelOptions": { "temperature": 0.2 }
       }
     ]

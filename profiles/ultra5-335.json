@@ -1,0 +1,15 @@
+{
+  "_comment": "Intel Core Ultra 5 335 (32GB LPDDR5x-7467, ~18GB NPU): Foundry Local serving an NPU-accelerated model.",
+  "roles": {
+    "workhorse": "phi-4-mini",
+    "vision": "phi-4-mini",
+    "fast": "phi-4-mini",
+    "reasoner": "phi-4-mini-reasoning",
+    "chat_default": "phi-4-mini",
+    "embed": "BAAI/bge-small-en-v1.5"
+  },
+  "env": {
+    "FOUNDRY_MODEL": "phi-4-mini",
+    "FOUNDRY_PORT": "8000"
+  }
+}

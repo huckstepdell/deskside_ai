@@ -1,31 +1,22 @@
 {
-  "_comment": "12GB RTX 4070 / 32GB RAM: vLLM serving a 7B AWQ model at 8K context.",
+  "_comment": "12GB RTX 4070 / 32GB RAM: vLLM serving Qwen3 8B AWQ-Marlin at 32K context (like-for-like with Blackwell 4000 NVFP4).",
   "roles": {
-    "workhorse": "Qwen/Qwen2.5-7B-Instruct-AWQ",
-    "vision": "Qwen/Qwen2.5-7B-Instruct-AWQ",
-    "fast": "Qwen/Qwen2.5-7B-Instruct-AWQ",
-    "reasoner": "Qwen/Qwen2.5-7B-Instruct-AWQ",
-    "chat_default": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+    "workhorse": "Qwen/Qwen3-8B-AWQ",
+    "vision": "Qwen/Qwen3-8B-AWQ",
+    "fast": "Qwen/Qwen3-8B-AWQ",
+    "reasoner": "Qwen/Qwen3-8B-AWQ",
+    "chat_default": "Qwen/Qwen3-8B-AWQ",
     "embed": "BAAI/bge-small-en-v1.5"
   },
-<<<<<<< HEAD
-=======
-  "pull": [
-    "gemma4:e4b",
-    "qwen2.5-coder:7b",
-    "qwen2.5:3b",
-    "llama3.2:3b",
-    "lfm3:1.7b",
-    "nomic-embed-text"
-  ],
->>>>>>> a49ff79def3acca8f15fa2c6fc4e2754bec78c9c
   "env": {
-    "VLLM_MODEL": "Qwen/Qwen2.5-7B-Instruct-AWQ",
+    "VLLM_MODEL": "Qwen/Qwen3-8B-AWQ",
     "VLLM_QUANTIZATION": "awq_marlin",
-    "VLLM_MAX_MODEL_LEN": "8192",
-    "VLLM_GPU_MEMORY_UTILIZATION": "0.85",
+    "VLLM_MAX_MODEL_LEN": "32768",
+    "VLLM_GPU_MEMORY_UTILIZATION": "0.88",
     "VLLM_KV_CACHE_DTYPE": "fp8",
-    "VLLM_MAX_NUM_SEQS": "4",
-    "VLLM_TOOL_CALL_PARSER": "hermes"
+    "VLLM_MAX_NUM_SEQS": "1",
+    "VLLM_REASONING_PARSER": "qwen3",
+    "VLLM_TOOL_CALL_PARSER": "hermes",
+    "VLLM_EXTRA_ARGS": "--max-num-batched-tokens 2048"
   }
 }

@@ -1,0 +1,15 @@
+{
+  "_comment": "Intel Core Ultra 7 265HX (128GB DDR5-6400, 18 TOPS NPU): Foundry Local serving a lightweight NPU/sidecar model.",
+  "roles": {
+    "workhorse": "qwen2.5-1.5b",
+    "vision": "qwen2.5-1.5b",
+    "fast": "qwen2.5-1.5b",
+    "reasoner": "qwen2.5-1.5b",
+    "chat_default": "qwen2.5-1.5b",
+    "embed": "BAAI/bge-small-en-v1.5"
+  },
+  "env": {
+    "FOUNDRY_MODEL": "qwen2.5-1.5b",
+    "FOUNDRY_PORT": "8000"
+  }
+}
