@@ -2,7 +2,7 @@ name: Dell Main Models
 version: 0.0.2
 schema: v1
 
-# contextLength is bounded by each vLLM node's VLLM_MAX_MODEL_LEN (GB10 64K, Blackwell 64K, 4070 32K);
+# contextLength is bounded by each vLLM node's VLLM_MAX_MODEL_LEN (GB10 64K, Blackwell 64K, 4070 24K);
 # maxTokens is kept well under it so the prompt still has room.
 models:
   # Default chat models via Aperture. The first entry is Continue's default.
@@ -37,9 +37,9 @@ models:
       temperature: 0.2
       maxTokens: 8192
 
-  - name: Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 32K Demo)
+  - name: Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 24K Demo)
     provider: openai
-    model: blackwell4000/nvidia/Qwen3-8B-NVFP4-32k
+    model: blackwell4000/nvidia/Qwen3-8B-NVFP4-24k
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
     capabilities:
       - tool_use
@@ -48,11 +48,11 @@ models:
       - edit
       - apply
     defaultCompletionOptions:
-      contextLength: 32768
+      contextLength: 24576
       temperature: 0.2
       maxTokens: 4096
 
-  - name: Code - RTX 4070 Qwen 3 8B (AWQ)
+  - name: Code - RTX 4070 Qwen 3 8B (AWQ · 24K)
     provider: openai
     model: rtx4070/Qwen/Qwen3-8B-AWQ
     apiBase: https://aperture.turtle-squeaker.ts.net/v1
@@ -63,7 +63,7 @@ models:
       - edit
       - apply
     defaultCompletionOptions:
-      contextLength: 32768
+      contextLength: 24576
       temperature: 0.2
       maxTokens: 4096
 

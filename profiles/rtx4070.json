@@ -1,5 +1,5 @@
 {
-  "_comment": "12GB RTX 4070 / 32GB RAM: vLLM serving Qwen3 8B AWQ-Marlin at 32K context (like-for-like with Blackwell 4000 NVFP4).",
+  "_comment": "12GB RTX 4070 / 32GB RAM (headless): vLLM serving Qwen3 8B AWQ-Marlin at 24K context (like-for-like with Blackwell 4000 24K Demo).",
   "roles": {
     "workhorse": "Qwen/Qwen3-8B-AWQ",
     "vision": "Qwen/Qwen3-8B-AWQ",
@@ -11,8 +11,8 @@
   "env": {
     "VLLM_MODEL": "Qwen/Qwen3-8B-AWQ",
     "VLLM_QUANTIZATION": "awq_marlin",
-    "VLLM_MAX_MODEL_LEN": "32768",
-    "VLLM_GPU_MEMORY_UTILIZATION": "0.88",
+    "VLLM_MAX_MODEL_LEN": "24576",
+    "VLLM_GPU_MEMORY_UTILIZATION": "0.90",
     "VLLM_KV_CACHE_DTYPE": "fp8",
     "VLLM_MAX_NUM_SEQS": "1",
     "VLLM_REASONING_PARSER": "qwen3",

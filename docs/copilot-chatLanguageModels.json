@@ -26,22 +26,22 @@
         "modelOptions": { "temperature": 0.2 }
       },
       {
-        "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4-32k",
-        "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 32K Demo)",
+        "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4-24k",
+        "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 24K Demo)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 20480,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       },
       {
         "id": "rtx4070/Qwen/Qwen3-8B-AWQ",
-        "name": "Code - RTX 4070 Qwen 3 8B (AWQ)",
+        "name": "Code - RTX 4070 Qwen 3 8B (AWQ · 24K)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 28672,
+        "maxInputTokens": 20480,
         "maxOutputTokens": 4096,
         "modelOptions": { "temperature": 0.2 }
       }
