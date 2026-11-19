@@ -1,11 +1,3 @@
-# Dockhand: deploy from Git with this file (build at deploy), set the variables in the stack environment.
-# Compute node: vLLM + metrics agent, no dashboard. Run on each GPU machine.
-#   DEMO_PROFILE=blackwell4000 docker compose -f compose.node.yml up -d --build
-# Optional dedicated containers (enable on nodes with enough VRAM):
-#   docker compose -f compose.node.yml --profile embed up -d
-#   docker compose -f compose.node.yml --profile fim up -d
-# BIND_IP pins the published ports to one address (e.g. the machine's tailnet IP) instead of all interfaces.
-# DEVICE_NAME is what the dashboard shows for this machine; the GB10 can leave it unset.
 services:
   node:
     build:
