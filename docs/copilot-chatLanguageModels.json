@@ -17,12 +17,12 @@
       },
       {
         "id": "blackwell4000/nvidia/Qwen3-8B-NVFP4",
-        "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 40K)",
+        "name": "Chat - Blackwell 4K Qwen 3 8B (NVFP4 · 64K)",
         "url": "https://aperture.turtle-squeaker.ts.net/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "maxInputTokens": 36864,
-        "maxOutputTokens": 4096,
+        "maxInputTokens": 57344,
+        "maxOutputTokens": 8192,
         "modelOptions": { "temperature": 0.2 }
       },
       {

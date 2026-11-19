@@ -1,5 +1,5 @@
 {
-  "_comment": "16GB Blackwell 4000 (Optimus): vLLM serving Qwen3 8B NVFP4 at native 40K max context for coding agents.",
+  "_comment": "16GB Blackwell 4000 (Optimus): vLLM serving Qwen3 8B NVFP4 at 64K context (via YaRN) for Copilot/Continue agents.",
   "roles": {
     "workhorse": "nvidia/Qwen3-8B-NVFP4",
     "vision": "nvidia/Qwen3-8B-NVFP4",
@@ -10,12 +10,12 @@
   },
   "env": {
     "VLLM_MODEL": "nvidia/Qwen3-8B-NVFP4",
-    "VLLM_MAX_MODEL_LEN": "40960",
+    "VLLM_MAX_MODEL_LEN": "65536",
     "VLLM_GPU_MEMORY_UTILIZATION": "0.92",
     "VLLM_KV_CACHE_DTYPE": "fp8",
     "VLLM_MAX_NUM_SEQS": "1",
     "VLLM_REASONING_PARSER": "qwen3",
     "VLLM_TOOL_CALL_PARSER": "hermes",
-    "VLLM_EXTRA_ARGS": "--max-num-batched-tokens 2048"
+    "VLLM_EXTRA_ARGS": "--max-num-batched-tokens 2048 --hf-overrides {\"rope_parameters\":{\"rope_type\":\"yarn\",\"factor\":2.0,\"original_max_position_embeddings\":32768,\"rope_theta\":1000000}}"
   }
 }
