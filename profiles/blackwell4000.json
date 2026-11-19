@@ -11,11 +11,12 @@
   "env": {
     "VLLM_MODEL": "nvidia/Qwen3-8B-NVFP4",
     "VLLM_MAX_MODEL_LEN": "65536",
+    "VLLM_ALLOW_LONG_MAX_MODEL_LEN": "1",
     "VLLM_GPU_MEMORY_UTILIZATION": "0.92",
     "VLLM_KV_CACHE_DTYPE": "fp8",
     "VLLM_MAX_NUM_SEQS": "1",
     "VLLM_REASONING_PARSER": "qwen3",
     "VLLM_TOOL_CALL_PARSER": "hermes",
-    "VLLM_EXTRA_ARGS": "--max-num-batched-tokens 2048 --hf-overrides {\"rope_scaling\":{\"rope_type\":\"yarn\",\"factor\":2.0,\"original_max_position_embeddings\":32768}}"
+    "VLLM_EXTRA_ARGS": "--max-num-batched-tokens 2048 --hf-overrides {\"rope_scaling\":{\"rope_type\":\"yarn\",\"factor\":2.0,\"original_max_position_embeddings\":32768},\"max_position_embeddings\":65536}"
   }
 }
